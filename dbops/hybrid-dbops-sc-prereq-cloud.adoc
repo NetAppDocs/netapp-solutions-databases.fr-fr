@@ -1,0 +1,69 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-prereq-cloud.html 
+summary: Avant d’installer le connecteur Cloud Manager et Cloud Volumes ONTAP et de configurer SnapMirror, nous devons effectuer certaines préparations pour notre environnement cloud.  Cette page décrit le travail à effectuer ainsi que les considérations à prendre en compte lors du déploiement de Cloud Volumes ONTAP. 
+keywords: prerequisites, aws, azure, gcp, cloud central, cloud volumes ontap 
+---
+= Prérequis pour le cloud public
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Avant d’installer le connecteur Cloud Manager et Cloud Volumes ONTAP et de configurer SnapMirror, nous devons effectuer certaines préparations pour notre environnement cloud.  Cette page décrit le travail à effectuer ainsi que les considérations à prendre en compte lors du déploiement de Cloud Volumes ONTAP.
+
+
+
+== Liste de contrôle des prérequis pour le déploiement de Cloud Manager et Cloud Volumes ONTAP
+
+* Une connexion NetApp Cloud Central
+* Accès réseau depuis un navigateur Web vers plusieurs points de terminaison
+* Un emplacement réseau pour un connecteur
+* Autorisations du fournisseur de cloud
+* Mise en réseau pour les services individuels
+
+
+Pour plus d'informations sur ce dont vous avez besoin pour commencer, visitez notre https://docs.netapp.com/us-en/occm/reference_checklist_cm.html["documentation sur le cloud"^] .
+
+
+
+== Considérations
+
+
+
+=== 1. Qu'est-ce qu'un connecteur Cloud Manager ?
+
+Dans la plupart des cas, un administrateur de compte Cloud Central doit déployer un connecteur dans votre réseau cloud ou sur site.  Le connecteur permet à Cloud Manager de gérer les ressources et les processus au sein de votre environnement de cloud public.
+
+Pour plus d'informations sur les connecteurs, visitez notre https://docs.netapp.com/us-en/occm/concept_connectors.html["documentation sur le cloud"^] .
+
+
+
+=== 2. Dimensionnement et architecture de Cloud Volumes ONTAP
+
+Lors du déploiement de Cloud Volumes ONTAP, vous avez le choix entre un package prédéfini ou la création de votre propre configuration.  Bien que bon nombre de ces valeurs puissent être modifiées ultérieurement sans interruption, certaines décisions clés doivent être prises avant le déploiement en fonction des charges de travail à déployer dans le cloud.
+
+Chaque fournisseur de cloud dispose de différentes options de déploiement et presque chaque charge de travail possède ses propres propriétés uniques.  NetApp a un https://bluexp.netapp.com/calculator-hub["Calculateur de coût total de possession"^] qui peut aider à dimensionner correctement les déploiements en fonction de la capacité et des performances, mais il a été construit autour de certains concepts de base qui méritent d'être pris en compte :
+
+* Capacité requise
+* Capacité réseau de la machine virtuelle cloud
+* Caractéristiques de performance du stockage cloud
+
+
+La clé est de planifier une configuration qui non seulement répond aux exigences actuelles de capacité et de performances, mais qui prend également en compte la croissance future.  C'est ce que l'on appelle généralement la marge de capacité et la marge de performance.
+
+Si vous souhaitez plus d'informations, lisez la documentation sur la planification correcte pour https://docs.netapp.com/us-en/occm/task_planning_your_config.html["AWS"^] , https://docs.netapp.com/us-en/occm/task_planning_your_config_azure.html["Azuré"^] , et https://docs.netapp.com/us-en/occm/task_planning_your_config_gcp.html["BPC"^] .
+
+
+
+=== 3. Nœud unique ou haute disponibilité ?
+
+Dans tous les clouds, il existe la possibilité de déployer CVO soit dans un seul nœud, soit dans une paire de clusters à haute disponibilité avec deux nœuds.  Selon le cas d'utilisation, vous souhaiterez peut-être déployer un seul nœud pour réduire les coûts ou une paire HA pour offrir davantage de disponibilité et de redondance.
+
+Pour un cas d'utilisation DR ou pour la mise en place d'un stockage temporaire à des fins de développement et de test, les nœuds uniques sont courants, car l'impact d'une panne soudaine de zone ou d'infrastructure est plus faible.  Cependant, pour tout cas d'utilisation de production, lorsque les données se trouvent dans un seul emplacement ou lorsque l'ensemble de données doit avoir plus de redondance et de disponibilité, une haute disponibilité est recommandée.
+
+Pour plus d'informations sur l'architecture de la version de haute disponibilité de chaque cloud, consultez la documentation de https://docs.netapp.com/us-en/occm/concept_ha.html["AWS"^] , https://docs.netapp.com/us-en/occm/concept_ha_azure.html["Azuré"^] et https://docs.netapp.com/us-en/occm/concept_ha_google_cloud.html["BPC"^] .

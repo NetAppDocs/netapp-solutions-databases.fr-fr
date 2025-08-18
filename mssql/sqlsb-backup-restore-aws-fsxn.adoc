@@ -1,0 +1,619 @@
+---
+sidebar: sidebar 
+permalink: mssql/sqlsb-backup-restore-aws-fsxn.html 
+keywords: SQL server, SQL, backup, recover, AWS, aws, sql 
+summary:  
+---
+= TR-4951 : Sauvegarde et restauration pour Microsoft SQL Server sur AWS FSx ONTAP
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Ce document couvre les étapes nécessaires pour effectuer la sauvegarde et la récupération de Microsoft SQL Server sur AWS FSx ONTAP avec SnapCenter.  Cela comprend les informations suivantes :
+
+* Configuration de NetApp SnapCenter
+* Opérations de sauvegarde SnapCenter
+* Opération de sauvegarde d'une base de données FCI
+* Opération de sauvegarde pour plusieurs bases de données
+* Restauration et récupération
+
+
+
+
+== Configuration de SnapCenter
+
+Les étapes suivantes doivent être effectuées pour la configuration de SnapCenter et la protection des ressources Microsoft SQL Server.  Chacune des étapes suivantes est détaillée dans les sections suivantes.
+
+. Configurez les informations d’identification de l’administrateur système pour l’utilisateur de sauvegarde et de restauration de SQL Server.
+. Configurer les paramètres de stockage.  Fournissez les informations d'identification de gestion Amazon Web Services (AWS) pour accéder aux machines virtuelles de stockage (SVM) Amazon FSx ONTAP à partir de SnapCenter.
+. Ajoutez un hôte SQL Server à SnapCenter.  Déployez et installez les plug-ins SnapCenter requis.
+. Configurer les politiques.  Définissez le type d’opération de sauvegarde, la rétention et la réplication facultative de la sauvegarde instantanée.
+. Configurer et protéger la base de données Microsoft SQL Server.
+
+
+
+
+== Interface utilisateur SnapCenter nouvellement installée
+
+Configurez les informations d’identification pour la sauvegarde SQL Server et restaurez l’utilisateur avec les droits d’administrateur système.
+
+image:sqlsb-aws-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+NetApp recommande d'utiliser le contrôle d'accès basé sur les rôles (RBAC) pour déléguer les capacités de protection et de gestion des données à des utilisateurs individuels sur les hôtes SnapCenter et Windows.  L'utilisateur doit avoir accès au serveur SQL hébergeant la base de données.  Pour plusieurs hôtes, le nom d'utilisateur et le mot de passe doivent être les mêmes sur les différents hôtes.  De plus, pour permettre à SnapCenter de déployer le plug-in requis sur les hôtes SQL Server, vous devez enregistrer les informations de domaine pour que SnapCenter valide vos informations d'identification et vos hôtes.
+
+Développez les sections suivantes pour voir les instructions détaillées sur la façon de terminer chaque étape.
+
+.Ajoutez les informations d'identification
+[%collapsible%open]
+====
+Accédez à *Paramètres*, sélectionnez *Informations d’identification* et cliquez sur (*+*).
+
+image:sqlsb-aws-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Le nouvel utilisateur doit disposer de droits d’administrateur sur l’hôte SQL Server.
+
+image:sqlsb-aws-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+====
+.Configurer le stockage
+[%collapsible%open]
+====
+Pour configurer le stockage dans SnapCenter, procédez comme suit :
+
+. Dans l'interface utilisateur de SnapCenter , sélectionnez *Systèmes de stockage*.  Il existe deux types de stockage, * ONTAP SVM* et * ONTAP Cluster*.  Par défaut, le type de stockage est * ONTAP SVM*.
+. Cliquez sur (*+*) pour ajouter les informations sur le système de stockage.
++
+image:sqlsb-aws-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Fournissez le point de terminaison de gestion *FSx ONTAP *.
++
+image:sqlsb-aws-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Le SVM est maintenant configuré dans SnapCenter.
++
+image:sqlsb-aws-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+====
+.Ajouter un hôte SQL Server à SnapCenter
+[%collapsible%open]
+====
+Pour ajouter un hôte SQL Server, procédez comme suit :
+
+. Dans l’onglet Hôte, cliquez sur (*+*) pour ajouter l’hôte Microsoft SQL Server.
++
+image:sqlsb-aws-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Fournissez le nom de domaine complet (FQDN) ou l’adresse IP de l’hôte distant.
++
+
+NOTE: Les informations d'identification sont renseignées par défaut.
+
+. Sélectionnez l’option pour Microsoft Windows et Microsoft SQL Server, puis soumettez.
++
+image:sqlsb-aws-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+Les packages SQL Server sont installés.
+
+image:sqlsb-aws-009.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Une fois l'installation terminée, accédez à l'onglet *Ressource* pour vérifier si tous les volumes iSCSI FSx ONTAP sont présents.
++
+image:sqlsb-aws-010.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+====
+.Configurer le répertoire des journaux
+[%collapsible%open]
+====
+Pour configurer un répertoire de journaux d’hôte, procédez comme suit :
+
+. Cliquez sur la case à cocher.  Un nouvel onglet s'ouvre.
++
+image:sqlsb-aws-011.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur le lien *configurer le répertoire des journaux*.
++
+image:sqlsb-aws-012.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez le lecteur pour le répertoire du journal de l’hôte et le répertoire du journal de l’instance FCI.  Cliquez sur *Enregistrer*.  Répétez le même processus pour le deuxième nœud du cluster.  Ferme la fenêtre.
++
+image:sqlsb-aws-013.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+L'hôte est désormais en état d'exécution.
+
+image:sqlsb-aws-014.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Depuis l'onglet *Ressources*, nous avons tous les serveurs et bases de données.
++
+image:sqlsb-aws-015.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+====
+
+
+== Configurer une politique de sauvegarde
+
+Une politique de sauvegarde est un ensemble de règles qui régissent la manière de gérer, de planifier et de conserver les sauvegardes.  Il aide à déterminer le type et la fréquence de sauvegarde en fonction du SLA de votre entreprise.
+
+Développez les sections suivantes pour voir les instructions détaillées sur la façon de terminer chaque étape.
+
+.Configurer l'opération de sauvegarde pour une base de données FCI
+[%collapsible%open]
+====
+Pour configurer une politique de sauvegarde pour une base de données FCI, procédez comme suit :
+
+. Accédez à *Paramètres* et sélectionnez *Politiques* en haut à gauche.  Cliquez ensuite sur *Nouveau*.
++
+image:sqlsb-aws-016.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Saisissez le nom de la politique et une description.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-017.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez *Sauvegarde complète* comme type de sauvegarde.
++
+image:sqlsb-aws-018.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez la fréquence de planification (celle-ci est basée sur le SLA de l'entreprise).  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-019.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les paramètres de conservation pour la sauvegarde.
++
+image:sqlsb-aws-020.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les options de réplication.
++
+image:sqlsb-aws-021.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez un script d'exécution à exécuter avant et après l'exécution d'une tâche de sauvegarde (le cas échéant).
++
+image:sqlsb-aws-022.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Exécutez la vérification en fonction du calendrier de sauvegarde.
++
+image:sqlsb-aws-023.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. La page *Résumé* fournit des détails sur la politique de sauvegarde.  Toute erreur peut être corrigée ici.
++
+image:sqlsb-aws-024.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+====
+
+
+== Configurer et protéger la base de données MSSQL Server
+
+. Définissez la date de début et la date d’expiration de la politique de sauvegarde.
++
+image:sqlsb-aws-025.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez le calendrier de la sauvegarde.  Pour ce faire, cliquez sur (*+*) pour configurer un planning.  Saisissez la *Date de début* et la date *Expire le*.  Définissez l'heure en fonction du SLA de l'entreprise.
++
+image:sqlsb-aws-026.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurer le serveur de vérification.  Dans le menu déroulant, sélectionnez le serveur.
++
+image:sqlsb-aws-027.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Confirmez le planning configuré en cliquant sur le signe plus et confirmez.
+. Fournir des informations pour la notification par courrier électronique.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-028.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+Le résumé de la politique de sauvegarde de la base de données SQL Server est désormais configuré.
+
+image:sqlsb-aws-029.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+== Opérations de sauvegarde SnapCenter
+
+Pour créer des sauvegardes SQL Server à la demande, procédez comme suit :
+
+. Dans la vue *Ressource*, sélectionnez la ressource et sélectionnez *Sauvegarder maintenant*.
++
+image:sqlsb-aws-030.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Dans la boîte de dialogue *Sauvegarde*, cliquez sur *Sauvegarde*.
++
+image:sqlsb-aws-031.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Un écran de confirmation s'affiche.  Cliquez sur *Oui* pour confirmer.
++
+image:sqlsb-aws-032.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Surveiller la tâche de sauvegarde
+
+. Dans l'onglet *Moniteur*, cliquez sur la tâche et sélectionnez *Détails* sur la droite pour afficher les tâches.
++
+image:sqlsb-aws-033.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:sqlsb-aws-034.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+Une fois la sauvegarde terminée, une nouvelle entrée s'affiche dans la vue Topologie.
+
+
+
+== Opération de sauvegarde pour plusieurs bases de données
+
+Pour configurer une politique de sauvegarde pour plusieurs bases de données SQL Server, créez des politiques de groupe de ressources en procédant comme suit :
+
+. Dans l’onglet *Ressources* du menu *Affichage*, passez à un groupe de ressources à l’aide du menu déroulant.
++
+image:sqlsb-aws-035.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur (*+*) pour un nouveau groupe de ressources.
++
+image:sqlsb-aws-036.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Donnez un nom et une étiquette.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-037.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Ajouter des ressources au groupe de ressources :
++
+** *Hôte.*  Sélectionnez dans le menu déroulant le serveur hébergeant la base de données.
+** *Type de ressource.*  Dans le menu déroulant, sélectionnez *Base de données*.
+** *Instance SQL Server.*  Sélectionnez le serveur.
++
+image:sqlsb-aws-038.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+L'option *Sélectionne automatiquement toutes les ressources du même volume de stockage* est sélectionnée par défaut.  Désactivez l'option et sélectionnez uniquement les bases de données que vous devez ajouter au groupe de ressources. Cliquez sur la flèche pour ajouter et cliquez sur *Suivant*.
+
++
+image:sqlsb-aws-039.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+. Sur les politiques, cliquez sur (*+*).
++
+image:sqlsb-aws-040.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Saisissez le nom de la stratégie de groupe de ressources.
++
+image:sqlsb-aws-041.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez *Sauvegarde complète* et la fréquence de planification en fonction du SLA de votre entreprise.
++
+image:sqlsb-aws-042.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les paramètres de rétention.
++
+image:sqlsb-aws-043.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les options de réplication.
++
+image:sqlsb-aws-044.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les scripts à exécuter avant d’effectuer une sauvegarde.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-045.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Confirmez la vérification pour les planifications de sauvegarde suivantes.
++
+image:sqlsb-aws-046.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sur la page *Résumé*, vérifiez les informations et cliquez sur *Terminer*.
++
+image:sqlsb-aws-047.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Configurer et protéger plusieurs bases de données SQL Server
+
+. Cliquez sur le signe (*+*) pour configurer la date de début et la date d'expiration.
++
+image:sqlsb-aws-048.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Régler l'heure.
++
+image:sqlsb-aws-049.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:sqlsb-aws-050.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Dans l'onglet *Vérification*, sélectionnez le serveur, configurez la planification et cliquez sur *Suivant*.
++
+image:sqlsb-aws-051.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurer les notifications pour envoyer un e-mail.
++
+image:sqlsb-aws-052.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+La politique est désormais configurée pour la sauvegarde de plusieurs bases de données SQL Server.
+
+image:sqlsb-aws-053.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+== Déclencher une sauvegarde à la demande pour plusieurs bases de données SQL Server
+
+. Dans l’onglet *Ressource*, sélectionnez Afficher.  Dans le menu déroulant, sélectionnez *Groupe de ressources*.
++
+image:sqlsb-aws-054.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez le nom du groupe de ressources.
+. Cliquez sur *Sauvegarder maintenant* en haut à droite.
++
+image:sqlsb-aws-055.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Une nouvelle fenêtre s'ouvre.  Cochez la case *Vérifier après la sauvegarde*, puis cliquez sur sauvegarder.
++
+image:sqlsb-aws-056.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Un message de confirmation s'affiche.  Cliquez sur *Oui*.
++
+image:sqlsb-aws-057.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Surveiller les tâches de sauvegarde de plusieurs bases de données
+
+Dans la barre de navigation de gauche, cliquez sur *Surveiller*, sélectionnez la tâche de sauvegarde et cliquez sur *Détails* pour afficher la progression de la tâche.
+
+image:sqlsb-aws-058.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Cliquez sur l'onglet *Ressource* pour voir le temps nécessaire à la sauvegarde.
+
+image:sqlsb-aws-059.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+== Sauvegarde du journal des transactions pour la sauvegarde de plusieurs bases de données
+
+SnapCenter prend en charge les modèles de récupération complète, journalisée en masse et simple.  Le mode de récupération simple ne prend pas en charge la sauvegarde du journal transactionnel.
+
+Pour effectuer une sauvegarde du journal des transactions, procédez comme suit :
+
+. Depuis l'onglet *Ressources*, changez le menu d'affichage de *Base de données* à *Groupe de ressources*.
++
+image:sqlsb-aws-060.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez la politique de sauvegarde du groupe de ressources créée.
+. Sélectionnez *Modifier le groupe de ressources* en haut à droite.
++
+image:sqlsb-aws-061.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. La section *Nom* contient par défaut le nom et la balise de la politique de sauvegarde.  Cliquez sur *Suivant*.
++
+L'onglet *Ressources* met en évidence les bases sur lesquelles la politique de sauvegarde des transactions doit être configurée.
+
++
+image:sqlsb-aws-062.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Entrez le nom de la politique.
++
+image:sqlsb-aws-063.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez les options de sauvegarde de SQL Server.
+. Sélectionnez la sauvegarde du journal.
+. Définissez la fréquence de planification en fonction du RTO de votre entreprise.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-064.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez les paramètres de conservation de la sauvegarde du journal.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-065.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. (Facultatif) Configurez les options de réplication.
++
+image:sqlsb-aws-066.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. (Facultatif) Configurez tous les scripts à exécuter avant d’effectuer une tâche de sauvegarde.
++
+image:sqlsb-aws-067.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. (Facultatif) Configurez la vérification de sauvegarde.
++
+image:sqlsb-aws-068.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sur la page *Résumé*, cliquez sur *Terminer*.
++
+image:sqlsb-aws-069.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Configurer et protéger plusieurs bases de données MSSQL Server
+
+. Cliquez sur la politique de sauvegarde du journal des transactions nouvellement créée.
++
+image:sqlsb-aws-070.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez la *Date de début* et la date *Expire le*.
+. Saisissez la fréquence de la politique de sauvegarde du journal en fonction du SLA, du RTP et du RPO.  Cliquez sur OK.
++
+image:sqlsb-aws-071.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Vous pouvez voir les deux politiques.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-072.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurer le serveur de vérification.
++
+image:sqlsb-aws-073.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurer la notification par e-mail.
++
+image:sqlsb-aws-074.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sur la page *Résumé*, cliquez sur *Terminer*.
++
+image:sqlsb-aws-075.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Déclenchement d'une sauvegarde du journal des transactions à la demande pour plusieurs bases de données SQL Server
+
+Pour déclencher une sauvegarde à la demande du journal transactionnel pour plusieurs bases de données SQL Server, procédez comme suit :
+
+. Sur la page de politique nouvellement créée, sélectionnez *Sauvegarder maintenant* en haut à droite de la page.
++
+image:sqlsb-aws-076.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Dans la fenêtre contextuelle de l’onglet *Politique*, sélectionnez le menu déroulant, sélectionnez la politique de sauvegarde et configurez la sauvegarde du journal des transactions.
++
+image:sqlsb-aws-077.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur *Sauvegarder*.  Une nouvelle fenêtre s'affiche.
+. Cliquez sur *Oui* pour confirmer la politique de sauvegarde.
++
+image:sqlsb-aws-078.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Surveillance
+
+Accédez à l’onglet *Surveillance* et surveillez la progression de la tâche de sauvegarde.
+
+image:sqlsb-aws-079.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+== Restauration et récupération
+
+Consultez les conditions préalables suivantes nécessaires à la restauration d’une base de données SQL Server dans SnapCenter.
+
+* L'instance cible doit être en ligne et en cours d'exécution avant qu'une tâche de restauration ne soit terminée.
+* Les opérations SnapCenter planifiées pour s'exécuter sur la base de données SQL Server doivent être désactivées, y compris toutes les tâches planifiées sur les serveurs de gestion à distance ou de vérification à distance.
+* Si vous restaurez des sauvegardes de répertoire de journaux personnalisés sur un autre hôte, le serveur SnapCenter et l'hôte du plug-in doivent avoir la même version de SnapCenter installée.
+* Vous pouvez restaurer la base de données système sur un autre hôte.
+* SnapCenter peut restaurer une base de données dans un cluster Windows sans mettre le groupe de clusters SQL Server hors ligne.
+
+
+
+
+== Restauration des tables supprimées d'une base de données SQL Server à un moment donné
+
+Pour restaurer une base de données SQL Server à un moment donné, procédez comme suit :
+
+. La capture d’écran suivante montre l’état initial de la base de données SQL Server avant les tables supprimées.
++
+image:sqlsb-aws-080.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+La capture d'écran montre que 20 lignes ont été supprimées de la table.
+
++
+image:sqlsb-aws-081.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Connectez-vous au serveur SnapCenter .  Dans l’onglet *Ressources*, sélectionnez la base de données.
++
+image:sqlsb-aws-082.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez la sauvegarde la plus récente.
+. Sur la droite, sélectionnez *Restaurer*.
++
+image:sqlsb-aws-083.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Une nouvelle fenêtre s'affiche.  Sélectionnez l'option *Restaurer*.
+. Restaurez la base de données sur le même hôte où la sauvegarde a été créée.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-084.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Pour le *Type de récupération*, sélectionnez *Toutes les sauvegardes de journaux*.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-085.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:sqlsb-aws-086.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+*Options de pré-restauration :*
+
+. Sélectionnez l'option *Écraser la base de données avec le même nom lors de la restauration*.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-087.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+*Options de post-restauration :*
+
+. Sélectionnez l'option *Opérationnel, mais indisponible pour restaurer des journaux de transactions supplémentaires*.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-088.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Fournissez les paramètres de courrier électronique.  Cliquez sur *Suivant*.
++
+image:sqlsb-aws-089.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sur la page *Résumé*, cliquez sur *Terminer*.
++
+image:sqlsb-aws-090.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Suivi de la progression de la restauration
+
+. Dans l'onglet *Surveillance*, cliquez sur les détails de la tâche de restauration pour afficher la progression de la tâche de restauration.
++
+image:sqlsb-aws-091.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Restaurer les détails du travail.
++
+image:sqlsb-aws-092.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Retournez à l'hôte SQL Server > base de données > les tables sont présentes.
++
+image:sqlsb-aws-093.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Où trouver des informations supplémentaires
+
+Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :
+
+* https://www.netapp.com/pdf.html?item=/media/12400-tr4714pdf.pdf["TR-4714 : Guide des meilleures pratiques pour Microsoft SQL Server avec NetApp SnapCenter"^]
++
+https://www.netapp.com/pdf.html?item=/media/12400-tr4714pdf.pdf["https://www.netapp.com/pdf.html?item=/media/12400-tr4714pdf.pdf"^]
+
+* https://docs.netapp.com/us-en/snapcenter-45/protect-scsql/concept_requirements_for_restoring_a_database.html["Conditions requises pour la restauration d'une base de données"^]
++
+https://docs.netapp.com/us-en/snapcenter-45/protect-scsql/concept_requirements_for_restoring_a_database.html["https://docs.netapp.com/us-en/snapcenter-45/protect-scsql/concept_requirements_for_restoring_a_database.html"^]
+
+* Comprendre les cycles de vie des bases de données clonées
++
+https://library.netapp.com/ecmdocs/ECMP1217281/html/GUID-4631AFF4-64FE-4190-931E-690FCADA5963.html["https://library.netapp.com/ecmdocs/ECMP1217281/html/GUID-4631AFF4-64FE-4190-931E-690FCADA5963.html"^]
+
+

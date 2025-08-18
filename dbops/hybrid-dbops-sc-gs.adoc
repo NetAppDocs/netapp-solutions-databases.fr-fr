@@ -1,0 +1,45 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-gs.html 
+summary: Cette section fournit un résumé des tâches qui doivent être accomplies pour répondre aux exigences préalables décrites dans la section précédente.  La section suivante fournit une liste de tâches de haut niveau pour les opérations sur site et dans le cloud public.  Les processus et procédures détaillés sont accessibles en cliquant sur les liens correspondants. 
+keywords: introduction, workflow 
+---
+= Présentation de la mise en route
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Cette section fournit un résumé des tâches qui doivent être accomplies pour répondre aux exigences préalables décrites dans la section précédente.  La section suivante fournit une liste de tâches de haut niveau pour les opérations sur site et dans le cloud public.  Les processus et procédures détaillés sont accessibles en cliquant sur les liens correspondants.
+
+
+
+== Sur site
+
+* Configurer l'utilisateur administrateur de la base de données dans SnapCenter
+* Conditions préalables à l'installation du plugin SnapCenter
+* Installation du plug-in hôte SnapCenter
+* Découverte des ressources de la base de données
+* Configurer l'appairage de clusters de stockage et la réplication de volumes de bases de données
+* Ajouter un stockage de base de données CVO SVM à SnapCenter
+* Configurer la politique de sauvegarde de la base de données dans SnapCenter
+* Mettre en œuvre une politique de sauvegarde pour protéger la base de données
+* Valider la sauvegarde
+
+
+
+
+== Cloud public AWS
+
+* Contrôle pré-vol
+* Étapes pour déployer Cloud Manager et Cloud Volumes ONTAP dans AWS
+* Déployer une instance de calcul EC2 pour la charge de travail de la base de données
+
+
+Cliquez sur les liens suivants pour plus de détails :
+
+link:hybrid-dbops-sc-gs-onprem.html["Sur place"],link:hybrid-dbops-sc-gs-aws.html["Cloud public - AWS"]

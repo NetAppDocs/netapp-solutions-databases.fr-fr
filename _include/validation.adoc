@@ -1,0 +1,96 @@
+= Où aller chercher de l’aide ?
+:allow-uri-read: 
+
+
+. Connectez-vous au serveur Oracle en tant qu’utilisateur Oracle et exécutez les commandes suivantes :
++
+[source, cli]
+----
+ps -ef | grep ora
+----
++
+
+NOTE: Cela répertoriera les processus Oracle si l'installation s'est terminée comme prévu et que la base de données Oracle a démarré.
+
+. Connectez-vous à la base de données pour vérifier les paramètres de configuration de la base de données et les PDB créés avec les ensembles de commandes suivants.
++
+[source, cli]
+----
+[oracle@localhost ~]$ sqlplus / as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Thu May 6 12:52:51 2021
+Version 19.8.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.8.0.0.0
+
+SQL>
+
+SQL> select name, log_mode from v$database;
+NAME      LOG_MODE
+--------- ------------
+CDB2      ARCHIVELOG
+
+SQL> show pdbs
+
+    CON_ID CON_NAME                       OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+         2 PDB$SEED                       READ ONLY  NO
+         3 CDB2_PDB1                      READ WRITE NO
+         4 CDB2_PDB2                      READ WRITE NO
+         5 CDB2_PDB3                      READ WRITE NO
+
+col svrname form a30
+col dirname form a30
+select svrname, dirname, nfsversion from v$dnfs_servers;
+
+SQL> col svrname form a30
+SQL> col dirname form a30
+SQL> select svrname, dirname, nfsversion from v$dnfs_servers;
+
+SVRNAME                        DIRNAME                        NFSVERSION
+------------------------------ ------------------------------ ----------------
+172.21.126.200                 /rhelora03_u02                 NFSv3.0
+172.21.126.200                 /rhelora03_u03                 NFSv3.0
+172.21.126.200                 /rhelora03_u01                 NFSv3.0
+----
++
+Cela confirme que dNFS fonctionne correctement.
+
+. Connectez-vous à la base de données via l'écouteur pour vérifier la configuration de l'écouteur Oracle avec la commande suivante.  Passez au port d'écoute et au nom du service de base de données appropriés.
++
+[source, cli]
+----
+[oracle@localhost ~]$ sqlplus system@//localhost:1523/cdb2_pdb1.cie.netapp.com
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Thu May 6 13:19:57 2021
+Version 19.8.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Enter password:
+Last Successful login time: Wed May 05 2021 17:11:11 -04:00
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.8.0.0.0
+
+SQL> show user
+USER is "SYSTEM"
+SQL> show con_name
+CON_NAME
+CDB2_PDB1
+----
++
+Cela confirme que l'écouteur Oracle fonctionne correctement.
+
+
+
+
+
+=== Où aller chercher de l’aide ?
+
+Si vous avez besoin d'aide avec la boîte à outils, veuillez vous joindre à nous.link:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.

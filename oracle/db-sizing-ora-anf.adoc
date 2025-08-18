@@ -1,0 +1,172 @@
+---
+sidebar: sidebar 
+permalink: oracle/db-sizing-ora-anf.html 
+keywords: ONTAP, Azure, ANF, Sizing 
+summary: La solution fournit une boîte à outils utile pour dimensionner le calcul et le stockage pour le déploiement Oracle sur ANF dans le cloud Azure 
+---
+= Guide de dimensionnement Oracle pour Azure NetApp Files
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+Allen Cao, Niyaz Mohamed, NetApp
+
+[role="lead"]
+Cette solution fournit une boîte à outils utile pour dimensionner le calcul et le stockage pour le déploiement Oracle sur ANF dans le cloud Azure.
+
+
+
+== But
+
+Le déplacement de la charge de travail Oracle existante d'une plate-forme à une autre, par exemple d'un environnement local vers un cloud public, nécessite de dimensionner le calcul et le stockage sur la plate-forme cible pour répondre aux exigences de performances et de niveau de service.  Cette documentation présente une boîte à outils simple pour atteindre cet objectif.
+
+Contrairement à une nouvelle application de base de données, qui peut évoluer au fil du temps, une charge de travail Oracle existante a établi des modèles de charge de travail en termes d'exigences de calcul et de stockage, qui sont enregistrés dans un référentiel de charge de travail Oracle ou AWR.  Cette boîte à outils utilise un analyseur HTML pour récupérer les informations pertinentes d'Oracle AWR.  Les résultats sont complétés par des informations de dimensionnement supplémentaires obtenues via des scripts SQL sur la base de données pour fournir des conseils de calcul et de stockage significatifs lors du déplacement de la base de données Oracle.
+
+Cette solution répond aux cas d’utilisation suivants :
+
+* Fournissez des conseils de dimensionnement pour le calcul du serveur de base de données Oracle lors du déplacement de la base de données sur site vers le cloud Microsoft Azure.
+* Fournissez des conseils de dimensionnement pour le stockage du serveur de base de données Oracle lors du déplacement de la base de données sur site vers Microsoft Azure NetApp Files.
+
+
+
+
+== Public
+
+Cette solution est destinée aux personnes suivantes :
+
+* Un administrateur de base de données qui gère les bases de données Oracle dans un centre de données privé sur site ou dans un environnement cloud Microsoft Azure.
+* Un administrateur de stockage qui gère le stockage sur site ou le stockage Microsoft Azure NetApp Files qui prend en charge les bases de données Oracle.
+* Un propriétaire d’application qui souhaite migrer la base de données Oracle sur site vers le cloud Microsoft Azure.
+
+
+
+
+== Licence
+
+En accédant, en téléchargeant, en installant ou en utilisant le contenu de ce référentiel de boîte à outils, vous acceptez les termes de la licence énoncés danslink:https://netapp.sharepoint.com/sites/CIEBuilt-OnsTeam-DatabasesandApps/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FCIEBuilt%2DOnsTeam%2DDatabasesandApps%2FShared%20Documents%2FDatabases%20and%20Apps%2FDatabase%20Solutions%2FDB%20Sizing%20Toolkits%2FOracle%20Sizing%20Guidance%20for%20ANF%2FLICENSE%2ETXT&parent=%2Fsites%2FCIEBuilt%2DOnsTeam%2DDatabasesandApps%2FShared%20Documents%2FDatabases%20and%20Apps%2FDatabase%20Solutions%2FDB%20Sizing%20Toolkits%2FOracle%20Sizing%20Guidance%20for%20ANF["Fichier de licence"^] .
+
+
+NOTE: Il existe certaines restrictions concernant la production et/ou le partage d'œuvres dérivées du contenu de ce référentiel de boîte à outils.  Veuillez vous assurer de lire les termes de la licence avant d'utiliser le contenu.  Si vous n'acceptez pas toutes les conditions, n'accédez pas, ne téléchargez pas et n'utilisez pas le contenu de ce référentiel.
+
+
+
+== Déploiement de la solution
+
+
+
+=== Prérequis pour le déploiement
+
+[%collapsible%open]
+====
+Le déploiement nécessite les prérequis suivants.
+
+* Rapports Oracle AWR qui capturent les instantanés des activités de la base de données pendant la charge de travail maximale des applications.
+* Accès à la base de données Oracle pour exécuter des scripts SQL avec privilège DBA.
+
+
+====
+
+
+=== Téléchargez la boîte à outils
+
+[%collapsible%open]
+====
+Récupérer la boîte à outils du référentiellink:https://netapp.sharepoint.com/sites/CIEBuilt-OnsTeam-DatabasesandApps/Shared%20Documents/Forms/AllItems.aspx?csf=1&web=1&e=uJYdVB&CID=bec786b6%2Dccaa%2D42e3%2Db47d%2Ddf0dcb0ce0ef&RootFolder=%2Fsites%2FCIEBuilt%2DOnsTeam%2DDatabasesandApps%2FShared%20Documents%2FDatabases%20and%20Apps%2FDatabase%20Solutions%2FDB%20Sizing%20Toolkits%2FOracle%20Sizing%20Guidance%20for%20ANF&FolderCTID=0x01200006E27E44A468B3479EA2D52BCD950351["Guide de dimensionnement Oracle pour ANF"^]
+
+====
+
+
+=== Comment utiliser la boîte à outils ?
+
+[%collapsible%open]
+====
+La boîte à outils se compose d'un analyseur HTML basé sur le Web et de deux scripts SQL pour collecter des informations sur la base de données Oracle.  La sortie est ensuite saisie dans un modèle Excel pour générer des conseils de dimensionnement du calcul et du stockage pour le serveur de base de données Oracle.
+
+* Utilisez unlink:https://app.atroposs.com/#/awr-module["Analyseur HTML"^] Module AWR permettant de récupérer les informations de dimensionnement d'une base de données Oracle actuelle à partir d'un rapport AWR.
+* Exécutez ora_db_data_szie.sql en tant qu'administrateur de base de données pour récupérer la taille du fichier de données Oracle physique à partir de la base de données.
+* Exécutez ora_db_logs_size.sql en tant qu'administrateur de base de données pour récupérer la taille des journaux archivés Oracle avec la fenêtre de conservation des journaux d'archivage souhaitée (jours).
+* Saisissez les informations de dimensionnement obtenues ci-dessus dans le fichier de modèle Excel oracle_db_sizing_template_anf.xlsx pour créer un guide de dimensionnement sur le calcul et le stockage pour le serveur Oracle DB.
+
+
+====
+
+
+=== Démonstration de l'utilisation de la boîte à outils
+
+[%collapsible%open]
+====
+. Ouvrez le module AWR de l'analyseur HTML.
++
+image:db-sizing-ora-parser-001.png["Cette image fournit un écran d'analyse HTML pour le dimensionnement Oracle"]
+
+. Vérifiez le format de sortie au format .csv et cliquez sur `Upload files` pour télécharger le rapport awr.  L'analyseur renvoie les résultats dans une page HTML avec un résumé du tableau ainsi qu'un fichier output.csv dans `Download` dossier.
++
+image:db-sizing-ora-parser-002.png["Cette image fournit un écran d'analyse HTML pour le dimensionnement Oracle"]
+
+. Ouvrez le fichier de modèle Excel et copiez-collez le contenu csv dans la colonne A et la cellule 1 pour générer les informations de dimensionnement du serveur de base de données.
++
+image:db-sizing-ora-parser-anf-003.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"]
+
+. Mettez en surbrillance la colonne A et les champs 1 et 2, cliquez sur `Data` , alors `Text to Columns` pour ouvrir l'assistant de texte.  Choisir `Delimited` , alors `Next` à l'écran suivant.
++
+image:db-sizing-ora-parser-anf-004.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"]
+
+. Vérifier `Other` , puis entrez '=' comme `Delimiters` .  Cliquez sur `Next` à l'écran suivant.
++
+image:db-sizing-ora-parser-anf-005.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"]
+
+. Cliquez sur `Finish` pour terminer la conversion de la chaîne en format de colonne lisible.  Notez que les champs de dimensionnement VM et ANF ont été renseignés avec les données récupérées à partir du rapport Oracle AWR.
++
+image:db-sizing-ora-parser-anf-006.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"] image:db-sizing-ora-parser-anf-007.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"]
+
+. Exécutez le script ora_db_data_size.sql, ora_db_logs_size.sql en tant qu'administrateur de base de données dans sqlplus pour récupérer la taille des données de la base de données Oracle existante et la taille des journaux archivés avec le nombre de jours de fenêtre de conservation.
++
+....
+
+[oracle@ora_01 ~]$ sqlplus / as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Tue Mar 5 15:25:27 2024
+Version 19.18.0.0.0
+
+Copyright (c) 1982, 2022, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.18.0.0.0
+
+
+SQL> @/home/oracle/ora_db_data_size.sql;
+
+Aggregate DB File Size, GiB Aggregate DB File RW, GiB Aggregate DB File RO, GiB
+--------------------------- ------------------------- -------------------------
+                     159.05                    159.05                         0
+
+SQL> @/home/oracle/ora_db_logs_size.sql;
+Enter value for archivelog_retention_days: 14
+old   6:       where first_time >= sysdate - &archivelog_retention_days
+new   6:       where first_time >= sysdate - 14
+
+Log Size, GiB
+-------------
+        93.83
+
+SQL>
+
+....
++
+
+NOTE: Les informations de dimensionnement de la base de données récupérées à l'aide des scripts ci-dessus sont la somme de la taille réelle de tous les fichiers de données de base de données physiques ou fichiers journaux.  Cela ne prend pas en compte l’espace libre qui peut être disponible à l’intérieur de chaque fichier de données.
+
+. Saisissez le résultat dans un fichier Excel pour compléter la sortie des conseils de dimensionnement.
++
+image:db-sizing-ora-parser-anf-008.png["Cette image fournit une capture d'écran de modèle Excel pour le dimensionnement Oracle"]
+
+. ANF utilise un niveau de service à trois niveaux (Standard, Premium, Ultra) pour gérer la limite de débit du volume de la base de données.  Se référer àlink:https://learn.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-service-levels["Niveaux de service pour Azure NetApp Files"^] pour plus de détails.  En fonction des résultats des instructions de dimensionnement, choisissez un niveau de service ANF qui fournit un débit répondant aux exigences de la base de données.
+
+
+====

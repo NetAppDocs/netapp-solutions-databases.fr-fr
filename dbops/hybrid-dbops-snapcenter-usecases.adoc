@@ -1,0 +1,43 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-snapcenter-usecases.html 
+summary: 'Cette solution fournit aux clients et aux équipes de terrain de NetApp des instructions et des conseils pour la configuration, l"exploitation et la migration de bases de données vers un environnement de cloud hybride à l"aide de l"outil basé sur l"interface graphique utilisateur NetApp SnapCenter et du service de stockage NetApp CVO dans les clouds publics.' 
+keywords: tr-4908, tr4908, 4908, hybrid cloud, database, snapcenter, gui 
+---
+= TR-4908 : Présentation des solutions de bases de données cloud hybrides avec SnapCenter
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+Alan Cao, Félix Melligan, NetApp
+
+[role="lead"]
+Cette solution fournit aux clients et aux équipes terrain de NetApp des instructions et des conseils pour la configuration, l'exploitation et la migration de bases de données vers un environnement de cloud hybride à l'aide de l'outil basé sur l'interface graphique utilisateur NetApp SnapCenter et du service de stockage NetApp CVO dans les clouds publics pour les cas d'utilisation suivants :
+
+* Opérations de développement et de test de bases de données dans le cloud hybride
+* Reprise après sinistre de la base de données dans le cloud hybride
+
+
+Aujourd’hui, de nombreuses bases de données d’entreprise résident encore dans des centres de données d’entreprise privés pour des raisons de performances, de sécurité et/ou autres.  Cette solution de base de données cloud hybride permet aux entreprises d'exploiter leurs bases de données principales sur site tout en utilisant un cloud public pour les opérations de base de données de développement/test ainsi que pour la reprise après sinistre afin de réduire les coûts de licence et d'exploitation.
+
+De nombreuses bases de données d’entreprise, telles qu’Oracle, SQL Server, SAP HANA, etc., entraînent des coûts de licence et d’exploitation élevés.  De nombreux clients paient des frais de licence uniques ainsi que des coûts de support annuels en fonction du nombre de cœurs de calcul dans leur environnement de base de données, que les cœurs soient utilisés pour le développement, les tests, la production ou la reprise après sinistre.  Il est possible que bon nombre de ces environnements ne soient pas pleinement utilisés tout au long du cycle de vie de l’application.
+
+Les solutions offrent aux clients la possibilité de réduire potentiellement le nombre de cœurs sous licence en déplaçant leurs environnements de base de données dédiés au développement, aux tests ou à la reprise après sinistre vers le cloud.  En utilisant l'évolutivité du cloud public, la redondance, la haute disponibilité et un modèle de facturation basé sur la consommation, les économies de coûts en matière de licences et d'exploitation peuvent être substantielles, sans sacrifier la convivialité ou la disponibilité des applications.
+
+Au-delà des économies potentielles sur les coûts de licence de base de données, le modèle de licence CVO basé sur la capacité de NetApp permet aux clients de réduire les coûts de stockage par Go tout en leur offrant un niveau élevé de gestion de base de données qui n'est pas disponible auprès des services de stockage concurrents.  Le graphique suivant présente une comparaison des coûts de stockage des services de stockage populaires disponibles dans le cloud public.
+
+image:cvo-cloud-cost-comparision.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Cette solution démontre qu'en utilisant l'outil logiciel basé sur l'interface graphique SnapCenter et la technologie NetApp SnapMirror , les opérations de base de données cloud hybride peuvent être facilement configurées, mises en œuvre et exploitées.
+
+Les vidéos suivantes montrent SnapCenter en action :
+
+* https://www.youtube.com/watch?v=-DDTVtd868Q&list=PLdXI3bZJEw7nofM6lN44eOe4aOSoryckg&index=35["Sauvegarde d'une base de données Oracle sur un cloud hybride à l'aide de SnapCenter"^]
+* https://www.youtube.com/watch?v=NpeDbhK5f4c["SnapCenter- Cloner DEV/TEST vers AWS Cloud pour une base de données Oracle"^]
+
+
+Il est à noter que, bien que les illustrations de ce document présentent CVO comme une instance de stockage cible dans le cloud public, la solution est également entièrement validée pour la nouvelle version du moteur de stockage FSx ONTAP pour AWS.

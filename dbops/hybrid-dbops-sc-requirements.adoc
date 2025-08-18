@@ -1,0 +1,78 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-requirements.html 
+summary: Cette solution est conçue dans un environnement de cloud hybride pour prendre en charge les bases de données de production sur site qui peuvent être déployées sur tous les clouds publics populaires pour les opérations de développement/test et de reprise après sinistre. 
+keywords: requirements, virtualized, bare metal, versions, automation 
+---
+= Configuration requise SnapCenter
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Cette solution est conçue dans un environnement de cloud hybride pour prendre en charge les bases de données de production sur site qui peuvent être déployées sur tous les clouds publics populaires pour les opérations de développement/test et de reprise après sinistre.
+
+Cette solution prend en charge toutes les bases de données actuellement prises en charge par SnapCenter, bien que seules les bases de données Oracle et SQL Server soient présentées ici.  Cette solution est validée avec des charges de travail de base de données virtualisées, bien que les charges de travail bare-metal soient également prises en charge.
+
+Nous supposons que les serveurs de base de données de production sont hébergés sur site avec des volumes de base de données présentés aux hôtes de base de données à partir d'un cluster de stockage ONTAP .  Le SnapCenter software est installé sur site pour la sauvegarde de la base de données et la réplication des données vers le cloud.  Un contrôleur Ansible est recommandé mais pas requis pour l'automatisation du déploiement de la base de données ou la synchronisation de la configuration du noyau du système d'exploitation et de la base de données avec une instance DR de secours ou des instances de développement/test dans le cloud public.
+
+
+
+== Exigences
+
+[cols="3, 9"]
+|===
+| Environnement | Exigences 
+
+
+.7+| *Sur place* | Toutes les bases de données et versions prises en charge par SnapCenter 
+
+
+| SnapCenter v4.4 ou supérieur 
+
+
+| Ansible v2.09 ou supérieur 
+
+
+| Cluster ONTAP 9.x 
+
+
+| LIF intercluster configurés 
+
+
+| Connectivité depuis un site local vers un VPC cloud (VPN, interconnexion, etc.) 
+
+
+| Ports réseau ouverts - ssh 22 - tcp 8145, 8146, 10000, 11104, 11105 
+
+
+.3+| *Cloud - AWS* | https://docs.netapp.com/us-en/occm/task_creating_connectors_aws.html["Connecteur Cloud Manager"^] 
+
+
+| https://docs.netapp.com/us-en/occm/task_getting_started_aws.html["Cloud Volumes ONTAP"^] 
+
+
+| Correspondance des instances EC2 DB OS avec les instances sur site 
+
+
+.3+| *Cloud - Azure* | https://docs.netapp.com/us-en/occm/task_creating_connectors_azure.html["Connecteur Cloud Manager"^] 
+
+
+| https://docs.netapp.com/us-en/occm/task_getting_started_azure.html["Cloud Volumes ONTAP"^] 
+
+
+| Correspondance des machines virtuelles Azure DB OS avec les machines sur site 
+
+
+.3+| *Cloud - GCP* | https://docs.netapp.com/us-en/occm/task_creating_connectors_gcp.html["Connecteur Cloud Manager"^] 
+
+
+| https://docs.netapp.com/us-en/occm/task_getting_started_gcp.html["Cloud Volumes ONTAP"^] 
+
+
+| Correspondance des instances DB OS Google Compute Engine avec les instances sur site 
+|===

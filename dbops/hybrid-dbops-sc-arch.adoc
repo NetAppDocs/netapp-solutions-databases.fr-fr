@@ -1,0 +1,21 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-arch.html 
+summary: Cette section décrit une architecture cloud hybride typique pour les opérations de développement/test et de reprise après sinistre. 
+keywords: architecture, synchronized database 
+---
+= Architecture de la solution
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Le diagramme d’architecture suivant illustre une implémentation typique du fonctionnement d’une base de données d’entreprise dans un cloud hybride pour les opérations de développement/test et de reprise après sinistre.
+
+image:hybrid-cloud-db-diagram.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Dans le cadre d'opérations commerciales normales, les volumes de base de données synchronisés dans le cloud peuvent être clonés et montés sur des instances de base de données de développement/test pour le développement ou le test d'applications.  En cas de panne, les volumes de base de données synchronisés dans le cloud peuvent alors être activés pour la reprise après sinistre.

@@ -1,0 +1,122 @@
+---
+indexpage:
+  title: Solutions de base de données NetApp
+  summary: Les solutions de base de données d'entreprise NetApp sont un ensemble de
+    fonctionnalités stratégiques et technologiques qui démontrent les capacités du
+    stockage NetApp dans les principales bases de données d'entreprise.
+  lead: Les solutions de base de données NetApp sont un ensemble de fonctionnalités
+    stratégiques et technologiques qui démontrent les capacités du stockage NetApp
+    dans les principales bases de données d'entreprise.
+  tiles:
+  - title: Commencer
+    links:
+    - title: Quoi de neuf
+      url: "/whats-new.html"
+    - title: Blogs
+      url: "/blogs.html"
+    - title: Vidéos et démos
+      url: "/videos/index.html"
+  - title: Oracle pour Amazon FSx pour ONTAP
+    links:
+    - title: Déployer Oracle HA dans AWS EC2
+      url: "/oracle/aws-ora-ha-pacemaker.html"
+    - title: Déployer Oracle sur FSx ONTAP
+      url: "/automation/automation-ora-aws-fsx-iscsi.html"
+    - title: Exécutez Oracle sur VMware Cloud avec FSx ONTAP
+      url: "/oracle/aws-ora-fsx-vmc-guestmount.html"
+    - title: Réduisez les coûts de Data Guard avec FSx ONTAP
+      url: "/oracle/aws-ora-fsx-ec2-data-guard.html"
+    - title: Récupérer et cloner Oracle VLDB sur FSx ONTAP
+      url: "/oracle/aws-ora-fsx-ec2-inc-merge.html"
+    - title: Protéger et déployer Oracle sur FSx/EC2
+      url: "/oracle/aws-ora-fsx-ec2-iscsi-asm.html"
+  - title: Oracle pour Azure NetApp Files
+    links:
+    - title: Déployer Oracle VLDB sur ANF
+      url: "/oracle/azure-ora-anf-vldb-dg.html"
+    - title: Réduisez les coûts de Data Guard avec ANF
+      url: "/oracle/azure-ora-anf-data-guard.html"
+    - title: Récupérer et cloner Oracle VLDB sur ANF
+      url: "/oracle/azure-ora-anf-inc-merge.html"
+    - title: Déployer Oracle sur Azure NetApp Files avec NFS
+      url: "/automation/automation-ora-anf-nfs.html"
+    - title: Déployer et migrer Oracle sur ANF
+      url: "/oracle/azure-ora-nfile-usecase.html"
+  - title: Oracle pour Google Cloud
+    links:
+    - title: Optimiser la sauvegarde et la récupération Oracle VLDB sur Google Cloud
+      url: "/oracle/gcp-ora-gcnv-inc-merge.html"
+    - title: Déployer Oracle VLDB avec Data Guard sur Google Cloud
+      url: "/oracle/gcp-ora-gcnv-vldb-dg.html"
+    - title: Évaluer les solutions de stockage Oracle sur Google Cloud
+      url: "/oracle/gcp-oracle-gcnv-overview.html"
+  - title: Solutions de serveur SQL pour le cloud et sur site
+    links:
+    - title: Sauvegarder et récupérer SQL Server sur AWS FSx ONTAP
+      url: "/mssql/sqlsb-backup-restore-aws-fsxn.html"
+    - title: Exécutez SQL Server sur AWS EC2 avec FSx ONTAP
+      url: "/mssql/sql-aws-ec2.html"
+    - title: Exécuter SQL Server sur Azure NetApp Files
+      url: "/mssql/sql-srv-anf-overview.html"
+    - title: Migrer la charge de travail SQL sur site vers FSx ONTAP
+      url: "/mssql/customer-usecase-mssql-fsx1.html"
+    - title: SAP avec Microsoft SQL Server sur Windows à l'aide de données en cluster
+        ONTAP
+      url: https://www.netapp.com/pdf.html?item=/media/16865-tr-4467pdf.pdf
+    - title: Moderniser Microsoft SQL Server
+      url: https://www.netapp.com/pdf.html?item=/media/15613-na-446.pdf
+    - title: Meilleures pratiques pour Microsoft SQL Server avec ONTAP
+      url: https://www.netapp.com/pdf.html?item=/media/8585-tr4590.pdf
+    - title: Meilleures pratiques pour Microsoft SQL Server avec la série EF
+      url: https://www.netapp.com/pdf.html?item=/media/17086-tr4764pdf.pdf
+  - title: Solutions de bases de données cloud hybrides
+    links:
+    - title: Déployer et protéger Oracle RAC avec vVols dans VCF
+      url: "/oracle/vcf-ora-rac-vvol.html"
+    - title: Déployer et protéger Oracle SI avec vVols dans VCF
+      url: "/oracle/vcf-ora-si-vvol.html"
+    - title: Déployer Oracle sur NetApp C-Series avec NFS
+      url: "/automation/automation-ora-c-series-nfs.html"
+    - title: Déployer Oracle sur NetApp ASA avec iSCSI
+      url: "/automation/automation-ora-asa-iscsi.html"
+    - title: Déployer Oracle19c sur ONTAP avec automatisation
+      url: "/automation/db-protection-overview.html"
+    - title: Exécutez des bases de données Oracle sur NetApp EF-Series
+      url: https://www.netapp.com/pdf.html?item=/media/17248-tr4794pdf.pdf
+  - title: Bases de données open source
+    links:
+    - title: Déployer la base de données PostgreSQL et configurer la reprise après
+        sinistre dans AWS FSx/EC2
+      url: "/postgres/aws-postgres-fsx-ec2-hadr.html"
+    - title: Base de données MySQL sur ONTAP
+      url: https://www.netapp.com/pdf.html?item=/media/16423-tr-4722pdf.pdf
+  - title: SnapCenter pour les bases de données
+    links:
+    - title: Sauvegarder et cloner PostgreSQL sur ONTAP avec SnapCenter
+      url: "/postgres/snapctr-psql-ontap.html"
+    - title: Configurer, cloner et actualiser les bases de données Oracle avec l'automatisation
+      url: "/automation/automation-ora-clone-lifecycle.html"
+    - title: Déploiement automatisé d'Oracle dans Microsoft Azure NetApp File
+      url: "/oracle/snapctr-ora-azure-anf.html"
+    - title: Déployer des solutions de bases de données cloud hybrides avec SnapCenter
+      url: "/dbops/hybrid-dbops-snapcenter-usecases.html"
+  - title: Boîtes à outils d'automatisation de bases de données
+    links:
+    - title: Automatisez le cycle de vie des clones Oracle sur GCNV avec ASM
+      url: "/automation/automation-ora-clone-gcnv-asm.html"
+    - title: Automatisez le cycle de vie des clones Oracle sur ANF avec ASM
+      url: "/automation/automation-ora-clone-anf-asm.html"
+    - title: Migrer Oracle avec relocalisation PDB
+      url: "/automation/automation-ora-migration.html"
+    - title: Déployer Oracle HA/DR avec Amazon FSx for NetApp ONTAP
+      url: "/automation/automation-ora-hadr-fsx.html"
+    - title: Provisionner Amazon FSx for NetApp ONTAP et EC2
+      url: "/automation/automation-fsx-ec2-provision.html"
+    - title: Déployer PostgreSQL dans AWS
+      url: https://github.com/NetApp/na_postgresql_aws_deploy_hadr
+  - title: Demandes de solutions et commentaires
+    links:
+    - title: Proposer une nouvelle solution
+      url: https://github.com/NetAppDocs/netapp-solutions/issues/new?body=[Request%20Solution]%0d%0a%0d%0aSolution%20Use%20Case:%20%0d%0aSolution%20Description:%20%0d%0aAdditional%20Comments:&title=Request%20Solution%20-%20%3Csolution%3E
+    - title: Fournir un retour sur la solution
+      url: https://github.com/NetAppDocs/netapp-solutions/issues/new?body=[Solution%20Feedback]%0d%0a%0d%0aSolution%20Name:%20%0d%0aSolution%20Feedback:%20%0d%0aAdditional%20Comments:&title=Solution%20Feedback%20-%20%3Csolution%3E

@@ -1,0 +1,30 @@
+= 
+:allow-uri-read: 
+
+
+[.underline]* Configuration ONTAP et CVO*
+
+*Configurer et lancer le modèle de tâche.*
+
+. Créez le modèle de travail.
++
+.. Accédez à Ressources → Modèles → Ajouter et cliquez sur Ajouter un modèle de travail.
+.. Entrez le nom ONTAP/CVO Setup
+.. Sélectionnez le type de travail ; Exécuter configure le système en fonction d'un playbook.
+.. Sélectionnez l’inventaire, le projet, le playbook et les informations d’identification correspondants pour le playbook.
+.. Sélectionnez le playbook ontap_setup.yml pour un environnement sur site ou sélectionnez cvo_setup.yml pour la réplication vers une instance CVO.
+.. Collez les variables globales copiées à l’étape 4 dans le champ Variables de modèle sous l’onglet YAML.
+.. Cliquez sur Enregistrer.
+
+
+. Lancez le modèle de travail.
++
+.. Accédez à Ressources → Modèles.
+.. Cliquez sur le modèle souhaité, puis sur Lancer.
++
+
+NOTE: Nous utiliserons ce modèle et le copierons pour les autres playbooks.
+
+
+
+

@@ -1,0 +1,555 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-gs-onprem.html 
+summary: 'L"outil NetApp SnapCenter utilise le contrôle d"accès basé sur les rôles (RBAC) pour gérer l"accès aux ressources utilisateur et les octrois d"autorisations, et l"installation de SnapCenter crée des rôles préremplis.  Vous pouvez également créer des rôles personnalisés en fonction de vos besoins ou de vos applications.' 
+keywords: workflow, on premises, rbac, roles, permissions 
+---
+= Démarrer sur site
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+L'outil NetApp SnapCenter utilise le contrôle d'accès basé sur les rôles (RBAC) pour gérer l'accès aux ressources utilisateur et les octrois d'autorisations, et l'installation de SnapCenter crée des rôles préremplis.  Vous pouvez également créer des rôles personnalisés en fonction de vos besoins ou de vos applications.
+
+
+
+== Sur place
+
+
+
+=== 1. Configurer l'utilisateur administrateur de la base de données dans SnapCenter
+
+Il est logique d'avoir un ID utilisateur administrateur dédié pour chaque plate-forme de base de données prise en charge par SnapCenter pour la sauvegarde, la restauration et/ou la reprise après sinistre de la base de données.  Vous pouvez également utiliser un identifiant unique pour gérer toutes les bases de données.  Dans nos cas de test et notre démonstration, nous avons créé un utilisateur administrateur dédié pour Oracle et SQL Server, respectivement.
+
+Certaines ressources SnapCenter ne peuvent être provisionnées qu'avec le rôle SnapCenterAdmin.  Les ressources peuvent ensuite être attribuées à d’autres identifiants d’utilisateur pour y accéder.
+
+Dans un environnement SnapCenter sur site préinstallé et configuré, les tâches suivantes ont peut-être déjà été effectuées.  Sinon, les étapes suivantes créent un utilisateur administrateur de base de données :
+
+. Ajoutez l’utilisateur administrateur à Windows Active Directory.
+. Connectez-vous à SnapCenter à l’aide d’un identifiant attribué avec le rôle SnapCenterAdmin.
+. Accédez à l’onglet Accès sous Paramètres et Utilisateurs, puis cliquez sur Ajouter pour ajouter un nouvel utilisateur.  Le nouvel ID utilisateur est lié à l’utilisateur administrateur créé dans Windows Active Directory à l’étape 1. .  Attribuez le rôle approprié à l’utilisateur selon les besoins.  Affectez des ressources à l’utilisateur administrateur, le cas échéant.
+
+
+image:snapctr-admin-users.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+=== 2. Conditions préalables à l'installation du plugin SnapCenter
+
+SnapCenter effectue la sauvegarde, la restauration, le clonage et d'autres fonctions à l'aide d'un agent de plug-in exécuté sur les hôtes de base de données.  Il se connecte à l'hôte de la base de données et à la base de données via les informations d'identification configurées sous l'onglet Paramètres et informations d'identification pour l'installation du plug-in et d'autres fonctions de gestion.  Il existe des exigences de privilèges spécifiques en fonction du type d'hôte cible, tel que Linux ou Windows, ainsi que du type de base de données.
+
+Les informations d'identification des hôtes de base de données doivent être configurées avant l'installation du plug-in SnapCenter .  En règle générale, vous souhaitez utiliser un compte d'utilisateur administrateur sur l'hôte de base de données comme informations d'identification de connexion hôte pour l'installation du plug-in.  Vous pouvez également accorder le même ID utilisateur pour l’accès à la base de données à l’aide de l’authentification basée sur le système d’exploitation.  D'autre part, vous pouvez également utiliser l'authentification de base de données avec différents ID utilisateur de base de données pour l'accès à la gestion de la base de données.  Si vous décidez d'utiliser l'authentification basée sur le système d'exploitation, l'ID utilisateur de l'administrateur du système d'exploitation doit avoir accès à la base de données.  Pour l’installation de SQL Server basée sur un domaine Windows, un compte d’administrateur de domaine peut être utilisé pour gérer tous les serveurs SQL au sein du domaine.
+
+Hôte Windows pour serveur SQL :
+
+. Si vous utilisez les informations d’identification Windows pour l’authentification, vous devez configurer vos informations d’identification avant d’installer les plug-ins.
+. Si vous utilisez une instance SQL Server pour l’authentification, vous devez ajouter les informations d’identification après l’installation des plug-ins.
+. Si vous avez activé l’authentification SQL lors de la configuration des informations d’identification, l’instance ou la base de données découverte est affichée avec une icône de cadenas rouge.  Si l'icône de verrouillage apparaît, vous devez spécifier les informations d'identification de l'instance ou de la base de données pour ajouter avec succès l'instance ou la base de données à un groupe de ressources.
+. Vous devez attribuer les informations d'identification à un utilisateur RBAC sans accès administrateur système lorsque les conditions suivantes sont remplies :
++
+** Les informations d’identification sont attribuées à une instance SQL.
+** L'instance ou l'hôte SQL est attribué à un utilisateur RBAC.
+** L'utilisateur administrateur de la base de données RBAC doit disposer à la fois des privilèges de groupe de ressources et de sauvegarde.
+
+
+
+
+Hôte Unix pour Oracle :
+
+. Vous devez avoir activé la connexion SSH basée sur un mot de passe pour l'utilisateur root ou non root en modifiant sshd.conf et en redémarrant le service sshd.  L'authentification SSH basée sur un mot de passe sur l'instance AWS est désactivée par défaut.
+. Configurez les privilèges sudo pour que l'utilisateur non root puisse installer et démarrer le processus du plugin.  Après l'installation du plugin, les processus s'exécutent en tant qu'utilisateur root effectif.
+. Créez des informations d’identification avec le mode d’authentification Linux pour l’utilisateur d’installation.
+. Vous devez installer Java 1.8.x (64 bits) sur votre hôte Linux.
+. L'installation du plugin de base de données Oracle installe également le plugin SnapCenter pour Unix.
+
+
+
+
+=== 3. Installation du plug-in hôte SnapCenter
+
+
+NOTE: Avant de tenter d'installer les plug-ins SnapCenter sur des instances de serveur de base de données cloud, assurez-vous que toutes les étapes de configuration ont été effectuées comme indiqué dans la section cloud appropriée pour le déploiement de l'instance de calcul.
+
+Les étapes suivantes illustrent comment un hôte de base de données est ajouté à SnapCenter pendant qu'un plug-in SnapCenter est installé sur l'hôte.  La procédure s’applique à l’ajout d’hôtes sur site et d’hôtes cloud.  La démonstration suivante ajoute un hôte Windows ou Linux résidant dans AWS.
+
+
+
+==== Configurer les paramètres globaux de SnapCenter VMware
+
+Accédez à Paramètres > Paramètres globaux.  Sélectionnez « Les machines virtuelles ont des disques iSCSI directement connectés ou NFS pour tous les hôtes » sous Paramètres de l'hyperviseur et cliquez sur Mettre à jour.
+
+image:snapctr-vmware-global.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+==== Ajout d'un hôte Windows et installation du plugin sur l'hôte
+
+. Connectez-vous à SnapCenter avec un identifiant utilisateur doté des privilèges SnapCenterAdmin.
+. Cliquez sur l’onglet Hôtes dans le menu de gauche, puis cliquez sur Ajouter pour ouvrir le flux de travail Ajouter un hôte.
+. Choisissez Windows comme type d’hôte ; le nom d’hôte peut être un nom d’hôte ou une adresse IP.  Le nom d'hôte doit être résolu en l'adresse IP d'hôte correcte à partir de l'hôte SnapCenter .  Choisissez les informations d’identification de l’hôte créées à l’étape 2.  Choisissez Microsoft Windows et Microsoft SQL Server comme packages de plug-ins à installer.
++
+image:snapctr-add-windows-host-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Une fois le plugin installé sur un hôte Windows, son état général est affiché comme « Configurer le répertoire des journaux ».
++
+image:snapctr-add-windows-host-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur le nom d’hôte pour ouvrir la configuration du répertoire de journaux SQL Server.
++
+image:snapctr-add-windows-host-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur « Configurer le répertoire des journaux » pour ouvrir « Configurer le plug-in pour SQL Server ».
++
+image:snapctr-add-windows-host-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Parcourir pour découvrir le stockage NetApp afin qu'un répertoire de journaux puisse être défini ; SnapCenter utilise ce répertoire de journaux pour regrouper les fichiers journaux des transactions du serveur SQL.  Cliquez ensuite sur Enregistrer.
++
+image:snapctr-add-windows-host-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+
+NOTE: Pour que le stockage NetApp provisionné sur un hôte de base de données soit découvert, le stockage (sur site ou CVO) doit être ajouté à SnapCenter, comme illustré à l'étape 6 pour CVO à titre d'exemple.
+
+. Une fois le répertoire du journal configuré, l'état général du plug-in hôte Windows est modifié sur En cours d'exécution.
++
+image:snapctr-add-windows-host-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Pour affecter l'hôte à l'ID utilisateur de gestion de base de données, accédez à l'onglet Accès sous Paramètres et Utilisateurs, cliquez sur l'ID utilisateur de gestion de base de données (dans notre cas, le sqldba auquel l'hôte doit être affecté) et cliquez sur Enregistrer pour terminer l'affectation des ressources de l'hôte.
++
+image:snapctr-add-windows-host-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-add-windows-host-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Ajout d'un hôte Unix et installation du plugin sur l'hôte
+
+. Connectez-vous à SnapCenter avec un identifiant utilisateur doté des privilèges SnapCenterAdmin.
+. Cliquez sur l’onglet Hôtes dans le menu de gauche, puis cliquez sur Ajouter pour ouvrir le flux de travail Ajouter un hôte.
+. Choisissez Linux comme type d’hôte.  Le nom d'hôte peut être soit le nom d'hôte, soit une adresse IP.  Cependant, le nom d'hôte doit être résolu pour corriger l'adresse IP de l'hôte SnapCenter .  Choisissez les informations d’identification de l’hôte créées à l’étape 2.  Les informations d'identification de l'hôte nécessitent des privilèges sudo.  Cochez Oracle Database comme plug-in à installer, qui installe les plug-ins hôtes Oracle et Linux.
++
+image:snapctr-add-linux-host-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Plus d'options et sélectionnez « Ignorer les vérifications de préinstallation ».  Vous êtes invité à confirmer l’omission de la vérification de préinstallation.  Cliquez sur Oui, puis sur Enregistrer.
++
+image:snapctr-add-linux-host-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Soumettre pour démarrer l’installation du plugin.  Vous êtes invité à confirmer l'empreinte digitale comme indiqué ci-dessous.
++
+image:snapctr-add-linux-host-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. SnapCenter effectue la validation et l'enregistrement de l'hôte, puis le plug-in est installé sur l'hôte Linux.  Le statut est passé de Installation du plugin à En cours d'exécution.
++
+image:snapctr-add-linux-host-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Affectez l'hôte nouvellement ajouté à l'ID utilisateur de gestion de base de données approprié (dans notre cas, oradba).
++
+image:snapctr-add-linux-host-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-add-linux-host-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+=== 4. Découverte de ressources de base de données
+
+Avec une installation réussie du plugin, les ressources de la base de données sur l'hôte peuvent être immédiatement découvertes.  Cliquez sur l’onglet Ressources dans le menu de gauche.  Selon le type de plate-forme de base de données, un certain nombre de vues sont disponibles, telles que la base de données, le groupe de ressources, etc.  Vous devrez peut-être cliquer sur l’onglet Actualiser les ressources si les ressources sur l’hôte ne sont pas découvertes et affichées.
+
+image:snapctr-resources-ora.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Lorsque la base de données est initialement découverte, l'état général est affiché comme « Non protégé ».  La capture d'écran précédente montre une base de données Oracle non encore protégée par une politique de sauvegarde.
+
+Lorsqu'une configuration ou une politique de sauvegarde est configurée et qu'une sauvegarde a été exécutée, l'état général de la base de données affiche l'état de la sauvegarde comme « Sauvegarde réussie » et l'horodatage de la dernière sauvegarde.  La capture d’écran suivante montre l’état de sauvegarde d’une base de données utilisateur SQL Server.
+
+image:snapctr-resources-sql.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Si les informations d'identification d'accès à la base de données ne sont pas correctement configurées, un bouton de verrouillage rouge indique que la base de données n'est pas accessible.  Par exemple, si les informations d’identification Windows ne disposent pas d’un accès administrateur système à une instance de base de données, les informations d’identification de la base de données doivent être reconfigurées pour déverrouiller le verrou rouge.
+
+image:snapctr-add-windows-host-009.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+image:snapctr-add-windows-host-010.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Une fois les informations d’identification appropriées configurées au niveau Windows ou au niveau de la base de données, le cadenas rouge disparaît et les informations de type SQL Server sont collectées et examinées.
+
+image:snapctr-add-windows-host-011.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+=== 5. Configurer l'appairage des clusters de stockage et la réplication des volumes de base de données
+
+Pour protéger vos données de base de données sur site en utilisant un cloud public comme destination cible, les volumes de base de données de cluster ONTAP sur site sont répliqués sur le CVO cloud à l'aide de la technologie NetApp SnapMirror .  Les volumes cibles répliqués peuvent ensuite être clonés pour DEV/OPS ou la reprise après sinistre.  Les étapes de haut niveau suivantes vous permettent de configurer l’appairage de cluster et la réplication des volumes de base de données.
+
+. Configurez les LIF intercluster pour l’appairage de cluster sur le cluster local et l’instance de cluster CVO.  Cette étape peut être réalisée avec ONTAP System Manager.  Un déploiement CVO par défaut a des LIF inter-cluster configurés automatiquement.
++
+Cluster sur site :
+
++
+image:snapctr-cluster-replication-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+Cluster CVO cible :
+
++
+image:snapctr-cluster-replication-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Une fois les LIF intercluster configurés, l'appairage de cluster et la réplication de volume peuvent être configurés à l'aide de la fonction glisser-déposer dans NetApp Cloud Manager.  Voirlink:hybrid-dbops-sc-gs-aws.html#aws-public-cloud["Premiers pas - Cloud public AWS"] pour plus de détails.
++
+Alternativement, l'appairage de cluster et la réplication de volume de base de données peuvent être effectués à l'aide d' ONTAP System Manager comme suit :
+
+. Connectez-vous à ONTAP System Manager.  Accédez à Cluster > Paramètres et cliquez sur Cluster homologue pour configurer l’appairage de cluster avec l’instance CVO dans le cloud.
++
+image:snapctr-vol-snapmirror-000.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Accédez à l’onglet Volumes.  Sélectionnez le volume de base de données à répliquer et cliquez sur Protéger.
++
+image:snapctr-vol-snapmirror-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez la politique de protection sur Asynchrone.  Sélectionnez le cluster de destination et le SVM de stockage.
++
+image:snapctr-vol-snapmirror-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Validez que le volume est synchronisé entre la source et la cible et que la relation de réplication est saine.
++
+image:snapctr-vol-snapmirror-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+=== 6. Ajouter un stockage de base de données CVO SVM à SnapCenter
+
+. Connectez-vous à SnapCenter avec un identifiant utilisateur doté des privilèges SnapCenterAdmin.
+. Cliquez sur l'onglet Système de stockage dans le menu, puis cliquez sur Nouveau pour ajouter une SVM de stockage CVO qui héberge des volumes de base de données cibles répliqués à SnapCenter.  Saisissez l’adresse IP de gestion du cluster dans le champ Système de stockage, puis saisissez le nom d’utilisateur et le mot de passe appropriés.
++
+image:snapctr-add-cvo-svm-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Plus d’options pour ouvrir des options de configuration de stockage supplémentaires.  Dans le champ Plateforme, sélectionnez Cloud Volumes ONTAP, cochez Secondaire, puis cliquez sur Enregistrer.
++
+image:snapctr-add-cvo-svm-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Affectez les systèmes de stockage aux ID utilisateur de gestion de base de données SnapCenter comme indiqué dans<<3. Installation du plug-in hôte SnapCenter>> .
++
+image:snapctr-add-cvo-svm-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+=== 7. Configurer la politique de sauvegarde de la base de données dans SnapCenter
+
+Les procédures suivantes montrent comment créer une politique de sauvegarde complète de base de données ou de fichier journal.  La politique peut ensuite être mise en œuvre pour protéger les ressources des bases de données.  L'objectif de point de récupération (RPO) ou l'objectif de temps de récupération (RTO) dicte la fréquence des sauvegardes de la base de données et/ou du journal.
+
+
+
+==== Créer une politique de sauvegarde complète de la base de données pour Oracle
+
+. Connectez-vous à SnapCenter en tant qu’ID utilisateur de gestion de base de données, cliquez sur Paramètres, puis sur Politiques.
++
+image:snapctr-ora-policy-data-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Nouveau pour lancer un nouveau flux de travail de création de politique de sauvegarde ou choisissez une politique existante à modifier.
++
+image:snapctr-ora-policy-data-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez le type de sauvegarde et la fréquence de planification.
++
+image:snapctr-ora-policy-data-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez le paramètre de conservation des sauvegardes.  Cela définit le nombre de copies de sauvegarde complètes de la base de données à conserver.
++
+image:snapctr-ora-policy-data-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez les options de réplication secondaire pour pousser les sauvegardes de snapshots principaux locaux à répliquer vers un emplacement secondaire dans le cloud.
++
+image:snapctr-ora-policy-data-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez tout script facultatif à exécuter avant et après une exécution de sauvegarde.
++
+image:snapctr-ora-policy-data-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Exécutez la vérification de sauvegarde si vous le souhaitez.
++
+image:snapctr-ora-policy-data-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-ora-policy-data-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créer une politique de sauvegarde du journal de base de données pour Oracle
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données, cliquez sur Paramètres, puis sur Politiques.
+. Cliquez sur Nouveau pour lancer un nouveau flux de travail de création de politique de sauvegarde ou choisissez une politique existante à modifier.
++
+image:snapctr-ora-policy-log-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez le type de sauvegarde et la fréquence de planification.
++
+image:snapctr-ora-policy-log-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez la période de conservation du journal.
++
+image:snapctr-ora-policy-log-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Activer la réplication vers un emplacement secondaire dans le cloud public.
++
+image:snapctr-ora-policy-log-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les scripts facultatifs à exécuter avant et après la sauvegarde du journal.
++
+image:snapctr-ora-policy-log-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez tous les scripts de vérification de sauvegarde.
++
+image:snapctr-ora-policy-log-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-ora-policy-log-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créer une politique de sauvegarde complète de la base de données pour SQL
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données, cliquez sur Paramètres, puis sur Politiques.
++
+image:snapctr-sql-policy-data-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Nouveau pour lancer un nouveau flux de travail de création de politique de sauvegarde ou choisissez une politique existante à modifier.
++
+image:snapctr-sql-policy-data-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez l'option de sauvegarde et la fréquence de planification.  Pour SQL Server configuré avec un groupe de disponibilité, une réplique de sauvegarde préférée peut être définie.
++
+image:snapctr-sql-policy-data-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez la période de conservation des sauvegardes.
++
+image:snapctr-sql-policy-data-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Activer la réplication de la copie de sauvegarde vers un emplacement secondaire dans le cloud.
++
+image:snapctr-sql-policy-data-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les scripts facultatifs à exécuter avant ou après une tâche de sauvegarde.
++
+image:snapctr-sql-policy-data-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les options pour exécuter la vérification de sauvegarde.
++
+image:snapctr-sql-policy-data-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-sql-policy-data-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créez une politique de sauvegarde du journal de base de données pour SQL.
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données, cliquez sur Paramètres > Politiques, puis sur Nouveau pour lancer un nouveau flux de travail de création de politique.
++
+image:snapctr-sql-policy-log-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez l’option de sauvegarde du journal et la fréquence de planification.  Pour SQL Server configuré avec un groupe de disponibilité, une réplique de sauvegarde préférée peut être définie.
++
+image:snapctr-sql-policy-log-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. La politique de sauvegarde des données du serveur SQL définit la conservation des sauvegardes de journaux ; acceptez les valeurs par défaut ici.
++
+image:snapctr-sql-policy-log-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Activer la réplication de sauvegarde du journal vers le secondaire dans le cloud.
++
+image:snapctr-sql-policy-log-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les scripts facultatifs à exécuter avant ou après une tâche de sauvegarde.
++
+image:snapctr-sql-policy-log-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-sql-policy-log-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+=== 8. Mettre en œuvre une politique de sauvegarde pour protéger la base de données
+
+SnapCenter utilise un groupe de ressources pour sauvegarder une base de données dans un regroupement logique de ressources de base de données, comme plusieurs bases de données hébergées sur un serveur, une base de données partageant les mêmes volumes de stockage, plusieurs bases de données prenant en charge une application métier, etc.  La protection d’une seule base de données crée son propre groupe de ressources.  Les procédures suivantes montrent comment mettre en œuvre une politique de sauvegarde créée dans la section 7 pour protéger les bases de données Oracle et SQL Server.
+
+
+
+==== Créer un groupe de ressources pour la sauvegarde complète d'Oracle
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données et accédez à l’onglet Ressources.  Dans la liste déroulante Affichage, choisissez Base de données ou Groupe de ressources pour lancer le flux de travail de création du groupe de ressources.
++
+image:snapctr-ora-rgroup-full-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Fournissez un nom et des balises pour le groupe de ressources.  Vous pouvez définir un format de dénomination pour la copie instantanée et contourner la destination du journal d'archive redondant si elle est configurée.
++
+image:snapctr-ora-rgroup-full-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Ajoutez des ressources de base de données au groupe de ressources.
++
+image:snapctr-ora-rgroup-full-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez une politique de sauvegarde complète créée dans la section 7 dans la liste déroulante.
++
+image:snapctr-ora-rgroup-full-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur le signe (+) pour configurer la planification de sauvegarde souhaitée.
++
+image:snapctr-ora-rgroup-full-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur Charger les localisateurs pour charger le volume source et de destination.
++
+image:snapctr-ora-rgroup-full-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez le serveur SMTP pour la notification par e-mail si vous le souhaitez.
++
+image:snapctr-ora-rgroup-full-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-ora-rgroup-full-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créer un groupe de ressources pour la sauvegarde des journaux d'Oracle
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données et accédez à l’onglet Ressources.  Dans la liste déroulante Affichage, choisissez Base de données ou Groupe de ressources pour lancer le flux de travail de création du groupe de ressources.
++
+image:snapctr-ora-rgroup-log-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Fournissez un nom et des balises pour le groupe de ressources.  Vous pouvez définir un format de dénomination pour la copie instantanée et contourner la destination du journal d'archive redondant si elle est configurée.
++
+image:snapctr-ora-rgroup-log-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Ajoutez des ressources de base de données au groupe de ressources.
++
+image:snapctr-ora-rgroup-log-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez une politique de sauvegarde de journal créée dans la section 7 dans la liste déroulante.
++
+image:snapctr-ora-rgroup-log-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Cliquez sur le signe (+) pour configurer la planification de sauvegarde souhaitée.
++
+image:snapctr-ora-rgroup-log-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Si la vérification de sauvegarde est configurée, elle s'affiche ici.
++
+image:snapctr-ora-rgroup-log-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez un serveur SMTP pour la notification par e-mail si vous le souhaitez.
++
+image:snapctr-ora-rgroup-log-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-ora-rgroup-log-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créer un groupe de ressources pour la sauvegarde complète de SQL Server
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données et accédez à l’onglet Ressources.  Dans la liste déroulante Affichage, choisissez une base de données ou un groupe de ressources pour lancer le flux de travail de création du groupe de ressources.  Fournissez un nom et des balises pour le groupe de ressources.  Vous pouvez définir un format de dénomination pour la copie Snapshot.
++
+image:snapctr-sql-rgroup-full-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez les ressources de base de données à sauvegarder.
++
+image:snapctr-sql-rgroup-full-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez une politique de sauvegarde SQL complète créée dans la section 7.
++
+image:snapctr-sql-rgroup-full-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Ajoutez le timing exact des sauvegardes ainsi que la fréquence.
++
+image:snapctr-sql-rgroup-full-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Choisissez le serveur de vérification pour la sauvegarde sur le serveur secondaire si la vérification de la sauvegarde doit être effectuée.  Cliquez sur Charger le localisateur pour renseigner l’emplacement de stockage secondaire.
++
+image:snapctr-sql-rgroup-full-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez le serveur SMTP pour la notification par e-mail si vous le souhaitez.
++
+image:snapctr-sql-rgroup-full-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-sql-rgroup-full-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+==== Créer un groupe de ressources pour la sauvegarde des journaux de SQL Server
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données et accédez à l’onglet Ressources.  Dans la liste déroulante Affichage, choisissez une base de données ou un groupe de ressources pour lancer le flux de travail de création du groupe de ressources.  Fournissez le nom et les balises du groupe de ressources.  Vous pouvez définir un format de dénomination pour la copie Snapshot.
++
+image:snapctr-sql-rgroup-log-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez les ressources de base de données à sauvegarder.
++
+image:snapctr-sql-rgroup-log-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez une politique de sauvegarde du journal SQL créée dans la section 7.
++
+image:snapctr-sql-rgroup-log-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Ajoutez le timing exact de la sauvegarde ainsi que la fréquence.
++
+image:snapctr-sql-rgroup-log-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Choisissez le serveur de vérification pour la sauvegarde sur le serveur secondaire si la vérification de la sauvegarde doit être effectuée.  Cliquez sur le localisateur de charge pour renseigner l’emplacement de stockage secondaire.
++
+image:snapctr-sql-rgroup-log-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez le serveur SMTP pour la notification par e-mail si vous le souhaitez.
++
+image:snapctr-sql-rgroup-log-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé.
++
+image:snapctr-sql-rgroup-log-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+=== 9. Valider la sauvegarde
+
+Une fois les groupes de ressources de sauvegarde de base de données créés pour protéger les ressources de base de données, les tâches de sauvegarde s'exécutent selon la planification prédéfinie.  Vérifiez l’état d’exécution du travail sous l’onglet Surveiller.
+
+image:snapctr-job-status-sql.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Accédez à l’onglet Ressources, cliquez sur le nom de la base de données pour afficher les détails de la sauvegarde de la base de données et basculez entre les copies locales et les copies miroir pour vérifier que les sauvegardes Snapshot sont répliquées vers un emplacement secondaire dans le cloud public.
+
+image:snapctr-job-status-ora.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+À ce stade, les copies de sauvegarde de la base de données dans le cloud sont prêtes à être clonées pour exécuter des processus de développement/test ou pour la reprise après sinistre en cas de panne principale.

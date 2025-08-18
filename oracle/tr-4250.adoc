@@ -1,0 +1,21 @@
+---
+sidebar: sidebar 
+permalink: oracle/tr-4250.html 
+keywords:  
+summary:  
+---
+= TR-4250 : SAP avec Oracle sur UNIX et NFS avec NetApp Clustered Data ONTAP et SnapManager pour SAP 3.4
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+Nils Bauer, NetApp
+
+[role="lead"]
+Le TR-4250 répond aux défis de la conception de solutions de stockage pour prendre en charge les produits de la suite commerciale SAP à l'aide d'une base de données Oracle.  L’objectif principal de ce document est de relever les défis courants en matière de conception, de déploiement, d’exploitation et de gestion de l’infrastructure de stockage auxquels sont confrontés les dirigeants d’entreprise et informatiques qui utilisent la dernière génération de solutions SAP.  Les recommandations de ce document sont génériques ; elles ne sont pas spécifiques à une application SAP ni à la taille et à la portée de l'implémentation SAP.  TR-4250 suppose que le lecteur possède une compréhension de base de la technologie et du fonctionnement des produits NetApp et SAP.  Le TR-4250 a été développé sur la base de l'interaction du personnel technique de NetApp, SAP, Oracle et de nos clients.
+
+link:https://www.netapp.com/pdf.html?item=/media/19525-tr-4250.pdf["TR-4250 : SAP avec Oracle sur UNIX et NFS avec NetApp Clustered Data ONTAP et SnapManager pour SAP 3.4"^]

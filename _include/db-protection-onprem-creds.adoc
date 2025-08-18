@@ -1,0 +1,62 @@
+= 
+:allow-uri-read: 
+
+
+. Configurer les informations d'identification.
+. Créer des types d’informations d’identification.  Pour les solutions impliquant ONTAP, vous devez configurer le type d'informations d'identification pour qu'il corresponde aux entrées de nom d'utilisateur et de mot de passe.
++
+.. Accédez à Administration → Types d’informations d’identification, puis cliquez sur Ajouter.
+.. Fournissez le nom et la description.
+.. Collez le contenu suivant dans la configuration d'entrée :
++
+[source, cli]
+----
+fields:
+  - id: dst_cluster_username
+    type: string
+    label: Destination Cluster Username
+  - id: dst_cluster_password
+    type: string
+    label: Destination Cluster Password
+    secret: true
+  - id: src_cluster_username
+    type: string
+    label: Source Cluster Username
+  - id: src_cluster_password
+    type: string
+    label: Source Cluster Password
+    secret: true
+----
+.. Collez le contenu suivant dans la configuration de l'injecteur, puis cliquez sur Enregistrer :
++
+[source, cli]
+----
+extra_vars:
+  dst_cluster_username: '{{ dst_cluster_username }}'
+  dst_cluster_password: '{{ dst_cluster_password }}'
+  src_cluster_username: '{{ src_cluster_username }}'
+  src_cluster_password: '{{ src_cluster_password }}'
+----
+
+
+. Créer des informations d'identification pour ONTAP
++
+.. Accédez à Ressources → Informations d’identification, puis cliquez sur Ajouter.
+.. Saisissez le nom et les détails de l'organisation pour les informations d'identification ONTAP
+.. Sélectionnez le type d’informations d’identification créé à l’étape précédente.
+.. Sous Détails du type, saisissez le nom d’utilisateur et le mot de passe de vos clusters source et de destination.
+.. Cliquez sur Enregistrer
+
+
+. Créer des informations d'identification pour Oracle
++
+.. Accédez à Ressources → Informations d’identification, puis cliquez sur Ajouter.
+.. Saisissez le nom et les détails de l'organisation pour Oracle
+.. Sélectionnez le type d’informations d’identification de la machine.
+.. Sous Détails du type, entrez le nom d’utilisateur et le mot de passe des hôtes Oracle.
+.. Sélectionnez la méthode d’escalade des privilèges appropriée et entrez le nom d’utilisateur et le mot de passe.
+.. Cliquez sur Enregistrer
+.. Répétez le processus si nécessaire pour des informations d'identification différentes pour l'hôte dr_oracle.
+
+
+

@@ -1,0 +1,102 @@
+---
+sidebar: sidebar 
+permalink: oracle/aws-ora-fsx-ec2-benchmark.html 
+summary: 'Cette section fournit des détails sur la validation des performances et les résultats d"analyse comparative d"une charge de travail OLTP simulée Swingbench.' 
+keywords: HA, DR, database, Oracle, RDS, AWS, SnapCenter 
+---
+= Validation des performances et résultats de référence
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Le but de cette validation de performance n’est pas d’établir une note.  Au contraire, si vous suivez les procédures de déploiement et les meilleures pratiques décrites dans cette documentation, vous pouvez vous attendre à des mesures de performances similaires de votre déploiement de base de données Oracle dans un cloud public.
+
+Nous avons utilisé un module Swingbench Sales Order Entry (SOE) pour simuler une charge de travail de type OLTP, et nous avons appliqué la charge de travail à une base de données Oracle déployée sur une instance M5 EC2 avec des volumes de stockage FSx sur le protocole NFS.  Le profil d'E/S Swingbench SOE par défaut est proche d'une répartition lecture/écriture 80/20, ce qui est proche d'un profil de charge de travail Oracle OLTP réel.
+
+La charge de travail est augmentée en augmentant le nombre d'utilisateurs simultanés côté client qui effectuent la saisie des commandes, la navigation, les requêtes d'inventaire, etc.  Les nombres testés étaient de 8, 16, 32, 64 et 128 utilisateurs simultanés.  L'algorithme utilisé par Swingbench est lourd côté serveur pour pousser des volumes de transactions raisonnables et tester les limites du serveur Oracle.  Nous avons observé qu'avec 128 utilisateurs simultanés, l'utilisation du processeur de l'instance EC2 atteignait environ 80 à 90 % de sa capacité.
+
+Les sections suivantes fournissent des détails sur la configuration et les résultats des tests.
+
+
+
+== Configuration de l'environnement de test
+
+
+
+=== Calculer
+
+Nous avons déployé une instance EC2 M5 avec 8vCPU, 32G RAM et 10Gps de bande passante réseau.
+
+image:aws-ora-fsx-ec2-inst-010.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+=== Stockage FSx
+
+Nous avons créé trois volumes de base de données et monté les volumes avec NFS sur une instance EC2 comme suit :
+
+* /u01 - Binaire Oracle
+* /u02 - Fichiers de données Oracle, fichier de contrôle
+* /u03 - Fichiers journaux Oracle, fichier de contrôle
+
+
+Nous avons conservé deux copies d’un fichier de contrôle critique à des fins de redondance.
+
+image:aws-ora-fsx-ec2-stor-015.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Le système de fichiers FSx est configuré avec une capacité de 80 000 IOPS et un débit d'E/S de 2 GioBps.
+
+
+
+=== Configuration Oracle
+
+Nous avons installé la version Oracle 19c avec le patch RU 19.8. dNFS a été activé sur le serveur.
+
+La base de données a été déployée en tant que base de données conteneurisée avec trois PDB.  Nous avons utilisé une instance PDB pour les tests de performances.  La figure suivante montre le dimensionnement du stockage Oracle sur les points de montage NFS.
+
+image:aws-ora-fsx-ec2-inst-011.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+=== Configuration du banc pivotant
+
+Nous avons déployé Swingbench 2.6 (la dernière version) sur un hôte Windows avec 8vCPU et 32G de RAM.  Nous avons utilisé le module de test SOE plsql version 2 pour le benchmark.  Le profil de charge par défaut fournit un rapport lecture/écriture de 80/20 pour simuler la charge de travail des transactions OLTP réelles.
+
+Le facteur d'échelle du schéma que nous avons utilisé était de 50, ce qui a fourni une taille de chargement de données initiale de 160 Go et 30 Go d'allocation d'espace temporaire.  À cette échelle, le schéma SOE a fourni 1 000 entrepôts et 50 millions de clients pour la simulation du traitement des commandes en ligne.
+
+La capture d'écran suivante illustre le profil de charge de travail et les mesures d'exécution transactionnelle typiques de l'interface utilisateur Windows de Swingbench.
+
+image:aws-ora-fsx-ec2-swin-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Comme le montre ce graphique, le niveau de transaction est resté au même niveau tout au long du test.
+
+
+
+== Analyse des résultats des tests
+
+Nous avons capturé les résultats de Swingbench pour chaque exécution de test et obtenu les rapports Oracle AWR correspondants pour l'analyse des performances.
+
+Du côté de l’utilisateur final, nous avons examiné des indicateurs clés tels que le volume des transactions et le temps de réponse de l’utilisateur.  Les deux mesures montrent combien de transactions les utilisateurs peuvent exécuter à partir du système de saisie des commandes, compte tenu du nombre d'utilisateurs simultanés se connectant au système, ainsi que la rapidité avec laquelle les utilisateurs peuvent terminer les transactions et recevoir une réponse après avoir saisi leur commande.
+
+Du côté du serveur Oracle, nous avons analysé le rapport Oracle AWR pour déterminer les principaux événements d’attente susceptibles d’avoir ralenti les transactions des utilisateurs.  Les 10 principaux événements d'attente Oracle ont indiqué que, lors des tests de transaction simulés Swingbench, le serveur Oracle est principalement lié aux E/S, avec jusqu'à 50 à 60 % du temps de base de données consacré à `db file sequential read` . `log file sync` est également un facteur contributif car les validations de transaction obligent le processus de journalisation Oracle à vider les E/S du journal du cache tampon vers le fichier journal sur le disque, bien qu'il s'agisse d'un facteur plus petit au niveau du pourcentage de temps de la base de données.
+
+Nous avons représenté graphiquement le volume de transactions des utilisateurs, le temps de réponse des utilisateurs et les principaux événements d'attente Oracle par rapport au nombre d'utilisateurs simultanés lors d'une exécution de transaction.  Les résultats sont présentés ci-dessous :
+
+image:aws-ora-fsx-ec2-swin-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Ces résultats indiquent que nous pourrions augmenter régulièrement les volumes de transactions des utilisateurs avec un nombre accru d'utilisateurs simultanés tout en maintenant une latence d'E/S et un temps de réponse utilisateur constamment faibles, ce qui constitue des performances appropriées pour une application Oracle.
+
+La latence d'E/S et le temps de réponse de l'utilisateur ont commencé à augmenter quelque peu lorsque nous avons atteint 128 utilisateurs simultanés.  Cela est attendu car l'instance EC2 approche de la pleine capacité du serveur, comme illustré dans le diagramme suivant :
+
+image:aws-ora-fsx-ec2-swin-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+De même, le diagramme suivant montre les IOPS et le débit FSx correspondants tout en répondant aux volumes de transactions utilisateur à ce moment-là.
+
+image:aws-ora-fsx-ec2-swin-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"] image:aws-ora-fsx-ec2-swin-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Nous n'avons pas atteint la capacité de stockage FSx provisionnée, ni en termes d'IOPS ni en termes de débit, lorsque l'instance EC2 du serveur Oracle est devenue le facteur limitant.  Par conséquent, vous devez dimensionner correctement le calcul et le stockage en fonction du volume de transactions au niveau de l'application utilisateur, comme nous le démontrons dans la sectionlink:aws-ora-fsx-ec2-factors.html["Facteurs à prendre en compte pour le déploiement de la base de données Oracle."]

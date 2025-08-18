@@ -1,0 +1,185 @@
+---
+sidebar: sidebar 
+permalink: automation/getting-started-requirements.html 
+keywords: Linux, RHEL Oracle19c, NFS, ONTAP 
+summary: 'Cette page décrit la méthode automatisée de déploiement d"Oracle19c sur le stockage NetApp ONTAP .' 
+---
+= Commencer
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Cette solution a été conçue pour être exécutée dans un environnement AWX/Tower ou par CLI sur un hôte de contrôle Ansible.
+
+
+
+== AWX/Tour
+
+Pour les environnements AWX/Tower, vous êtes guidé dans la création d'un inventaire de votre gestion de cluster ONTAP et de votre serveur Oracle (adresses IP et noms d'hôte), la création d'informations d'identification, la configuration d'un projet qui extrait le code Ansible de NetApp Automation Github et le modèle de travail qui lance l'automatisation.
+
+. Remplissez les variables spécifiques à votre environnement, puis copiez-collez-les dans les champs Variables supplémentaires de votre modèle de travail.
+. Une fois les variables supplémentaires ajoutées à votre modèle de travail, vous pouvez lancer l'automatisation.
+. Le modèle de travail est exécuté en trois phases en spécifiant des balises pour ontap_config, linux_config et oracle_config.
+
+
+
+
+== CLI via l'hôte de contrôle Ansible
+
+. Pour configurer l'hôte Linux afin qu'il puisse être utilisé comme hôte de contrôle Ansiblelink:https://docs.netapp.com/us-en/netapp-solutions-dataops/automation/getting-started.html["cliquez ici pour des instructions détaillées"^]
+. Une fois l’hôte de contrôle Ansible configuré, vous pouvez cloner le référentiel Ansible Automation.
+. Modifiez le fichier hosts avec les adresses IP et/ou les noms d'hôte de votre gestion de cluster ONTAP et des adresses IP de gestion du serveur Oracle.
+. Remplissez les variables spécifiques à votre environnement, et copiez-les et collez-les dans le `vars.yml` déposer.
+. Chaque hôte Oracle possède un fichier de variables identifié par son nom d'hôte qui contient des variables spécifiques à l'hôte.
+. Une fois tous les fichiers variables terminés, vous pouvez exécuter le playbook en trois phases en spécifiant des balises pour `ontap_config` , `linux_config` , et `oracle_config` .
+
+
+
+
+== Exigences
+
+[cols="3, 9"]
+|===
+| Environnement | Exigences 
+
+
+.4+| *Environnement Ansible* | AWX/Tower ou hôte Linux comme hôte de contrôle Ansible 
+
+
+| Ansible v.2.10 et supérieur 
+
+
+| Python 3 
+
+
+| Bibliothèques Python - netapp-lib - xmltodict - jmespath 
+
+
+.3+| * ONTAP* | ONTAP versions 9.3 - 9.7 
+
+
+| Deux agrégats de données 
+
+
+| NFS vlan et ifgrp créés 
+
+
+.5+| *Serveur(s) Oracle* | RHEL 7/8 
+
+
+| Oracle Linux 7/8 
+
+
+| Interfaces réseau pour NFS, gestion publique et facultative 
+
+
+| Fichiers d'installation Oracle sur les serveurs Oracle 
+|===
+
+
+== Détails de l'automatisation
+
+Ce déploiement automatisé est conçu avec un seul playbook Ansible composé de trois rôles distincts.  Les rôles sont destinés aux configurations ONTAP, Linux et Oracle.  Le tableau suivant décrit les tâches qui sont automatisées.
+
+[cols="4, 9"]
+|===
+| Rôle | Tâches 
+
+
+.5+| *ontap_config* | Pré-vérification de l'environnement ONTAP 
+
+
+| Création d'un SVM basé sur NFS pour Oracle 
+
+
+| Création d'une politique d'exportation 
+
+
+| Création de volumes pour Oracle 
+
+
+| Création de LIF NFS 
+
+
+.9+| *linux_config* | Créer des points de montage et monter des volumes NFS 
+
+
+| Vérifier les montages NFS 
+
+
+| Configuration spécifique au système d'exploitation 
+
+
+| Créer des répertoires Oracle 
+
+
+| Configurer les pages géantes 
+
+
+| Désactiver SELinux et le démon du pare-feu 
+
+
+| Activer et démarrer le service chronyd 
+
+
+| augmenter la limite stricte du descripteur de fichier 
+
+
+| Créer un fichier de session pam.d 
+
+
+.8+| *oracle_config* | Installation du logiciel Oracle 
+
+
+| Créer un écouteur Oracle 
+
+
+| Créer des bases de données Oracle 
+
+
+| Configuration de l'environnement Oracle 
+
+
+| Enregistrer l'état PDB 
+
+
+| Activer le mode d'archivage d'instance 
+
+
+| Activer le client DNFS 
+
+
+| Activer le démarrage et l'arrêt automatiques de la base de données entre les redémarrages du système d'exploitation 
+|===
+
+
+== Paramètres par défaut
+
+Pour simplifier l’automatisation, nous avons prédéfini de nombreux paramètres de déploiement Oracle requis avec des valeurs par défaut.  Il n’est généralement pas nécessaire de modifier les paramètres par défaut pour la plupart des déploiements.  Un utilisateur plus avancé peut apporter des modifications aux paramètres par défaut avec prudence.  Les paramètres par défaut se trouvent dans chaque dossier de rôle sous le répertoire par défaut.
+
+
+
+== Instructions de déploiement
+
+Avant de commencer, téléchargez les fichiers d'installation et de correctif Oracle suivants et placez-les dans le `/tmp/archive` répertoire avec accès en lecture, écriture et exécution pour tous les utilisateurs sur chaque serveur de base de données à déployer.  Les tâches d'automatisation recherchent les fichiers d'installation nommés dans ce répertoire particulier pour l'installation et la configuration d'Oracle.
+
+[listing]
+----
+LINUX.X64_193000_db_home.zip -- 19.3 base installer
+p31281355_190000_Linux-x86-64.zip -- 19.8 RU patch
+p6880880_190000_Linux-x86-64.zip -- opatch version 12.2.0.1.23
+----
+
+
+== Licence
+
+Vous devez lire les informations de licence telles qu'indiquées dans le référentiel Github.  En accédant, en téléchargeant, en installant ou en utilisant le contenu de ce référentiel, vous acceptez les termes de la licence énoncéelink:https://github.com/NetApp-Automation/na_oracle19c_deploy/blob/master/LICENSE.TXT["ici"^] .
+
+Veuillez noter qu'il existe certaines restrictions concernant la production et/ou le partage d'œuvres dérivées du contenu de ce référentiel.  Veuillez vous assurer de lire les conditions de l'link:https://github.com/NetApp-Automation/na_oracle19c_deploy/blob/master/LICENSE.TXT["Licence"^] avant d'utiliser le contenu.  Si vous n'acceptez pas toutes les conditions, n'accédez pas, ne téléchargez pas et n'utilisez pas le contenu de ce référentiel.
+
+Une fois que vous êtes prêt, cliquez surlink:awx-automation.html["ici pour les procédures détaillées de déploiement AWX/Tower"] oulink:cli-automation.html["ici pour le déploiement CLI"] .

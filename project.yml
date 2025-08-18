@@ -1,0 +1,300 @@
+---
+settings:
+  name: NetApp database solutions
+  internal:
+    pdf_enabled: true
+    lipi_enabled: true
+  prod:
+    pdf_enabled: true
+    harmony_enabled: false
+    lipi_enabled: true
+  pdf:
+    gen-type: named-only
+    zip-level: 1
+    zip-filename: netapp-solutions-databases.zip
+  langs: fr-fr,us-en,de-de,es-es,it-it,pt-br,ja-jp,ko-kr,zh-cn,zh-tw
+sidebar:
+  entries:
+  - title: Solutions de bases de données
+    url: "/index.html"
+  - title: Quoi de neuf
+    url: "/whats-new.html"
+  - title: Base de données Oracle
+    entries:
+    - title: Cloud AWS
+      entries:
+      - title: Oracle HA dans AWS EC2 avec Pacemaker Clustering et FSx ONTAP
+        pdf-filename: Oracle HA dans AWS EC2 avec Pacemaker Clustering et FSx ONTAP
+        url: "/oracle/aws-ora-ha-pacemaker.html"
+      - title: Déploiement Oracle simplifié et automatisé sur Amazon FSx ONTAP avec
+          iSCSI
+        pdf-filename: Déploiement Oracle simplifié et automatisé sur Amazon FSx ONTAP
+          avec iSCSI
+        url: "/automation/automation-ora-aws-fsx-iscsi.html"
+      - title: Oracle dans VMware Cloud sur AWS avec FSx ONTAP monté en invité
+        pdf-filename: Oracle dans VMware Cloud sur AWS avec FSx ONTAP monté en invité
+        url: "/oracle/aws-ora-fsx-vmc-guestmount.html"
+      - title: Réduction des coûts d'Oracle Active Data Guard avec Amazon FSx ONTAP
+        pdf-filename: Réduction des coûts d'Oracle Active Data Guard avec Amazon FSx
+          ONTAP
+        url: "/oracle/aws-ora-fsx-ec2-data-guard.html"
+      - title: Récupération rapide et clonage d'Oracle VLDB avec Amazon FSx ONTAP
+        pdf-filename: Récupération rapide et clonage d'Oracle VLDB avec Amazon FSx
+          ONTAP
+        url: "/oracle/aws-ora-fsx-ec2-inc-merge.html"
+      - title: Oracle 19c en redémarrage autonome sur AWS FSx/EC2 avec NFS/ASM
+        pdf-filename: Oracle 19c en redémarrage autonome sur AWS FSx/EC2 avec NFS/ASM
+        url: "/oracle/aws-ora-fsx-ec2-nfs-asm.html"
+      - title: Déploiement et protection de la base de données Oracle sur AWS FSx/EC2
+          avec iSCSI/ASM
+        pdf-filename: Déploiement et protection de bases de données Oracle sur AWS
+          FSx/EC2 avec iSCSI/ASM
+        url: "/oracle/aws-ora-fsx-ec2-iscsi-asm.html"
+      - title: Bonnes pratiques de déploiement de bases de données Oracle sur AWS
+          EC2 et FSx
+        pdf-filename: 'Déploiement de bases de données Oracle sur AWS EC2 et FSx :
+          bonnes pratiques'
+        entries:
+        - title: Cas d'utilisation
+          url: "/oracle/aws-ora-fsx-ec2-deploy-intro.html"
+        - title: Architecture de la solution
+          url: "/oracle/aws-ora-fsx-ec2-architecture.html"
+        - title: Facteurs à prendre en compte
+          url: "/oracle/aws-ora-fsx-ec2-factors.html"
+        - title: Procédures de déploiement
+          url: "/oracle/aws-ora-fsx-ec2-procedures.html"
+        - title: Gestion de base de données
+          url: "/oracle/aws-ora-fsx-ec2-mgmt.html"
+        - title: Migration de base de données
+          url: "/oracle/aws-ora-fsx-ec2-migration.html"
+    - title: Cloud Azure
+      entries:
+      - title: Implémentation Oracle VLDB à haut débit sur ANF
+        pdf-filename: Implémentation Oracle VLDB à haut débit sur ANF
+        url: "/oracle/azure-ora-anf-vldb-dg.html"
+      - title: Réduction des coûts d'Oracle Active Data Guard avec Azure NetApp Files
+        pdf-filename: Réduction des coûts d'Oracle Active Data Guard avec Azure NetApp
+          Files
+        url: "/oracle/azure-ora-anf-data-guard.html"
+      - title: Récupération rapide d'Oracle VLDB avec fusion incrémentielle sur ANF
+        pdf-filename: Récupération rapide d'Oracle VLDB avec fusion incrémentielle
+          sur ANF
+        url: "/oracle/azure-ora-anf-inc-merge.html"
+      - title: Déploiement Oracle simplifié et automatisé sur Azure NetApp Files avec
+          NFS
+        pdf-filename: Déploiement Oracle simplifié et automatisé sur Azure NetApp
+          Files avec NFS
+        url: "/automation/automation-ora-anf-nfs.html"
+      - title: Meilleures pratiques de déploiement et de migration de bases de données
+          Oracle pour ANF
+        pdf-filename: Meilleures pratiques de déploiement et de migration de bases
+          de données Oracle pour ANF
+        entries:
+        - title: Cas d'utilisation
+          url: "/oracle/azure-ora-nfile-usecase.html"
+        - title: Architecture de la solution
+          url: "/oracle/azure-ora-nfile-architecture.html"
+        - title: Facteurs à prendre en compte
+          url: "/oracle/azure-ora-nfile-factors.html"
+        - title: Procédures de déploiement
+          url: "/oracle/azure-ora-nfile-procedures.html"
+        - title: Migration de base de données
+          url: "/oracle/azure-ora-nfile-migration.html"
+    - title: Google Cloud
+      entries:
+      - title: Optimisez la sauvegarde et la récupération Oracle VLDB avec la fusion
+          incrémentielle sur serveur sur Google Cloud NetApp Volumes
+        pdf-filename: Optimisez la sauvegarde et la récupération Oracle VLDB avec
+          la fusion incrémentielle sur serveur sur les Google Cloud NetApp Volumes
+        url: "/oracle/gcp-ora-gcnv-inc-merge.html"
+      - title: Implémentation Oracle VLDB à haut débit sur Google Cloud NetApp Volumes
+          avec Data Guard
+        pdf-filename: Implémentation Oracle VLDB à haut débit sur GCNV avec Data Guard
+        url: "/oracle/gcp-ora-gcnv-vldb-dg.html"
+      - title: 'Présentation : base de données Oracle avec Google Cloud NetApp Volumes'
+        pdf-filename: 'Présentation : Oracle Database avec Google Cloud NetApp Volumes'
+        url: "/oracle/gcp-oracle-gcnv-overview.html"
+    - title: Sur site et cloud hybride
+      entries:
+      - title: Déploiement et protection d'Oracle RAC dans VCF avec vVols
+        pdf-filename: Déploiement et protection d'Oracle RAC dans VCF avec vVols
+        url: "/oracle/vcf-ora-rac-vvol.html"
+      - title: Déploiement et protection d'Oracle SI dans VCF avec vVols
+        pdf-filename: Déploiement et protection d'Oracle SI dans VCF avec vVols
+        url: "/oracle/vcf-ora-si-vvol.html"
+      - title: Déploiement Oracle simplifié et automatisé sur NetApp C-Series avec
+          NFS
+        pdf-filename: Déploiement Oracle simplifié et automatisé sur NetApp C-Series
+          avec NFS
+        url: "/automation/automation-ora-c-series-nfs.html"
+      - title: Déploiement Oracle simplifié et automatisé sur NetApp ASA avec iSCSI
+        pdf-filename: Déploiement Oracle simplifié et automatisé sur NetApp ASA avec
+          iSCSI
+        url: "/automation/automation-ora-asa-iscsi.html"
+      - title: Bases de données Oracle 19c RAC sur FlexPod DataCenter avec Cisco UCS
+          et NetApp AFF A800 sur FC
+        pdf-filename: Bases de données Oracle 19c RAC sur FlexPod DataCenter avec
+          Cisco UCS et NetApp AFF A800 sur FC
+        url: "/oracle/nva-1155.html"
+      - title: SAP avec Oracle sur UNIX et NFS avec NetApp Clustered Data ONTAP
+        pdf-filename: SAP avec Oracle sur UNIX et NFS avec NetApp Clustered Data ONTAP
+        url: "/oracle/tr-4250.html"
+      - title: Déploiement automatisé d'Oracle 19c pour ONTAP sur NFS
+        pdf-filename: Déploiement automatisé d'Oracle 19c pour ONTAP sur NFS
+        entries:
+        - title: Aperçu
+          url: "/automation/marketing-overview.html"
+        - title: Mise en route et exigences
+          url: "/automation/getting-started-requirements.html"
+        - title: Déploiement automatisé d'Oracle 19c AWX/Tower
+          url: "/automation/awx-automation.html"
+        - title: Déploiement automatisé de l'interface de ligne de commande Oracle
+            19c
+          url: "/automation/cli-automation.html"
+      - title: Protection automatisée des données Oracle
+        pdf-filename: Protection automatisée des données Oracle
+        entries:
+        - title: Aperçu
+          url: "/automation/db-protection-overview.html"
+        - title: Mise en route et exigences
+          url: "/automation/db-protection-getting-started.html"
+        - title: Protection automatisée des données Oracle pour AWX/Tower
+          url: "/automation/db-protection-awx-automation.html"
+      - title: Bases de données Oracle sur NetApp EF-Series
+        url: "/oracle/tr-4794.html"
+  - title: Microsoft SQL Server
+    entries:
+    - title: Sauvegarde et récupération pour Microsoft SQL Server sur AWS FSx ONTAP
+      pdf-filename: Sauvegarde et récupération pour Microsoft SQL Server sur AWS FSx
+        ONTAP
+      url: "/mssql/sqlsb-backup-restore-aws-fsxn.html"
+    - title: SQL Server sur AWS EC2 avec Amazon FSx ONTAP
+      pdf-filename: SQL Server sur AWS EC2 avec Amazon FSx ONTAP
+      url: "/mssql/sql-aws-ec2.html"
+    - title: SQL Server sur Azure NetApp Files
+      pdf-filename: SQL Server sur Azure NetApp Files
+      entries:
+      - title: Aperçu
+        url: "/mssql/sql-srv-anf-overview.html"
+      - title: Facteurs à prendre en compte
+        url: "/mssql/sql-srv-anf-factors-to-consider.html"
+      - title: Conception de référence (conception de haut niveau en temps réel)
+        url: "/mssql/sql-srv-anf-ref-design-overview.html"
+      - title: Conclusion
+        url: "/mssql/sql-srv-anf-conclusion.html"
+      - title: Où trouver des informations supplémentaires
+        url: "/mssql/sql-srv-anf-add-info.html"
+    - title: SAP avec Microsoft SQL Server sur Windows à l'aide de Clustered Data
+        ONTAP
+      pdf-filename: SAP avec Microsoft SQL Server sous Windows à l'aide de Clustered
+        Data ONTAP
+      url: "/mssql/tr-4467.html"
+    - title: Modernisation de Microsoft SQL Server
+      pdf-filename: Modernisation de Microsoft SQL Server
+      url: "/mssql/na-446.html"
+    - title: Guide des meilleures pratiques pour Microsoft SQL Server avec ONTAP
+      pdf-filename: Guide des meilleures pratiques pour Microsoft SQL Server avec
+        ONTAP
+      url: "/mssql/tr-4590.html"
+    - title: Guide des meilleures pratiques pour Microsoft SQL Server avec NetApp
+        EF-Series
+      pdf-filename: Guide des meilleures pratiques pour Microsoft SQL Server avec
+        NetApp EF-Series
+      url: "/mssql/tr-4764.html"
+  - title: Bases de données open source
+    entries:
+    - title: Déploiement automatisé de PostgreSQL HA et DR dans AWS FSx/EC2
+      pdf-filename: Déploiement automatisé de PostgreSQL HA et DR dans AWS FSx/EC2
+      url: "/postgres/aws-postgres-fsx-ec2-hadr.html"
+    - title: Base de données MySQL sur NetApp ONTAP
+      pdf-filename: Base de données MySQL sur NetApp ONTAP
+      url: "/mysql/tr-4722.html"
+  - title: SnapCenter pour les bases de données
+    entries:
+    - title: Sauvegarde, récupération et clonage PostgreSQL sur ONTAP
+      pdf-filename: Sauvegarde, récupération et clonage PostgreSQL sur ONTAP
+      url: "/postgres/snapctr-psql-ontap.html"
+    - title: Cycle de vie du clone Oracle de SnapCenter
+      pdf-filename: Cycle de vie du clone Oracle de SnapCenter
+      url: "/automation/automation-ora-clone-lifecycle.html"
+    - title: Sauvegarde, récupération et clonage de bases de données Oracle sur ANF
+      pdf-filename: Sauvegarde, récupération et clonage de bases de données Oracle
+        sur ANF
+      url: "/oracle/snapctr-ora-azure-anf.html"
+    - title: BlueXP SaaS pour Oracle - Azure
+      pdf-filename: BlueXP SaaS pour Oracle - Azure
+      url: "/oracle/snapctr-svcs-ora-azure.html"
+    - title: BlueXP SaaS pour Oracle - AWS
+      pdf-filename: BlueXP SaaS pour Oracle - AWS
+      url: "/oracle/snapctr-svcs-ora.html"
+    - title: Solutions de bases de données cloud hybrides avec SnapCenter
+      pdf-filename: Solutions de bases de données cloud hybrides avec SnapCenter
+      entries:
+      - title: Introduction
+        url: "/dbops/hybrid-dbops-snapcenter-usecases.html"
+      - title: Architecture de la solution
+        url: "/dbops/hybrid-dbops-sc-arch.html"
+      - title: Exigences de la solution
+        url: "/dbops/hybrid-dbops-sc-requirements.html"
+      - title: Configuration des prérequis
+        entries:
+        - title: Aperçu
+          url: "/dbops/hybrid-dbops-sc-prereq.html"
+        - title: Prérequis sur site
+          url: "/dbops/hybrid-dbops-sc-prereq-onprem.html"
+        - title: Prérequis pour le cloud public
+          url: "/dbops/hybrid-dbops-sc-prereq-cloud.html"
+      - title: Présentation de la mise en route
+        entries:
+        - title: Aperçu
+          url: "/dbops/hybrid-dbops-sc-gs.html"
+        - title: Premiers pas sur site
+          url: "/dbops/hybrid-dbops-sc-gs-onprem.html"
+        - title: Premiers pas avec le cloud public AWS
+          url: "/dbops/hybrid-dbops-sc-gs-aws.html"
+      - title: Workflow pour le développement/test en explosant vers le cloud
+        url: "/dbops/hybrid-dbops-snapcenter-devtest.html"
+      - title: Flux de travail de reprise après sinistre
+        url: "/dbops/hybrid-dbops-snapcenter-dr.html"
+  - title: Études de cas clients réels
+    entries:
+    - title: Une entreprise de produits médicaux migre sa charge de travail SQL sur
+        site vers Amazon FSx ONTAP pour réduire ses coûts
+      url: "/mssql/customer-usecase-mssql-fsx1.html"
+  - title: Boîtes à outils d'automatisation de bases de données
+    entries:
+    - title: Cycle de vie automatisé du clone Oracle VLDB avec sauvegarde d'image
+        sur le serveur
+      url: "/oracle/automation-ora-bkup-clone.html"
+    - title: Cycle de vie automatisé des clones Oracle sur GCNV avec ASM
+      url: "/automation/automation-ora-clone-gcnv-asm.html"
+    - title: Cycle de vie automatisé des clones Oracle sur ANF avec ASM
+      url: "/automation/automation-ora-clone-anf-asm.html"
+    - title: Cycle de vie du clone Oracle de SnapCenter
+      url: "/automation/automation-ora-clone-lifecycle.html"
+    - title: Migration Oracle
+      url: "/automation/automation-ora-migration.html"
+    - title: Oracle HA/DR avec AWS FSx ONTAP
+      url: "/automation/automation-ora-hadr-fsx.html"
+    - title: Provisionnement AWS FSx ONTAP et EC2
+      url: "/automation/automation-fsx-ec2-provision.html"
+  - title: Boîtes à outils de dimensionnement de base de données
+    entries:
+    - title: Guide de dimensionnement Oracle pour ANF
+      url: "/oracle/db-sizing-ora-anf.html"
+  - title: Vidéos
+    url: "/videos/index.html"
+    entries:
+    - title: bases de données Oracle
+      url: "/videos/videos-oracle-videos.html"
+    - title: Bases de données open source
+      url: "/videos/videos-open-source-videos.html"
+    - title: bases de données SQL Server
+      url: "/videos/videos-sqlserver-videos.html"
+  - title: Blogs
+    url: "/blogs.html"
+  - title: Mentions légales
+    url: "/legal-notices.html"
+product-family:
+  name: NetApp solutions
+  repo: netapp-solutions-family

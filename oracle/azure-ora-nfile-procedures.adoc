@@ -1,0 +1,439 @@
+---
+sidebar: sidebar 
+permalink: oracle/azure-ora-nfile-procedures.html 
+summary: Cette section décrit les procédures de déploiement de la base de données personnalisée Oracle RDS avec le stockage FSx. 
+keywords: AWS, Oracle, RDS, HA, DR, database 
+---
+= Procédures de déploiement Oracle étape par étape sur Azure VM et Azure NetApp Files
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Cette section décrit les procédures de déploiement de la base de données personnalisée Oracle RDS avec le stockage FSx.
+
+
+
+== Déployer une machine virtuelle Azure avec ANF pour Oracle via la console du portail Azure
+
+Si vous êtes nouveau sur Azure, vous devez d’abord configurer un environnement de compte Azure.  Cela inclut l’inscription de votre organisation pour utiliser Azure Active Directory.  La section suivante est un résumé de ces étapes.  Pour plus de détails, consultez la documentation spécifique à Azure liée.
+
+
+
+=== Créer et consommer des ressources Azure
+
+Une fois votre environnement Azure configuré et un compte créé et associé à un abonnement, vous pouvez vous connecter au portail Azure avec le compte pour créer les ressources nécessaires à l’exécution d’Oracle.
+
+
+
+==== 1. Créer un réseau virtuel ou VNet
+
+Azure Virtual Network (VNet) est l’élément de base de votre réseau privé dans Azure.  VNet permet à de nombreux types de ressources Azure, telles que les machines virtuelles Azure (VM), de communiquer en toute sécurité entre elles, avec Internet et avec les réseaux locaux.  Avant de provisionner une machine virtuelle Azure, un réseau virtuel (où une machine virtuelle est déployée) doit d’abord être configuré.
+
+Voirlink:https://docs.microsoft.com/en-us/azure/virtual-network/quick-create-portal["Créer un réseau virtuel à l'aide du portail Azure"^] pour créer un VNet.
+
+
+
+==== 2. Créer un compte de stockage NetApp et un pool de capacité pour ANF
+
+Dans ce scénario de déploiement, un système d’exploitation de machine virtuelle Azure est provisionné à l’aide d’un stockage Azure standard, mais les volumes ANF sont provisionnés pour exécuter la base de données Oracle via NFS.  Tout d’abord, vous devez créer un compte de stockage NetApp et un pool de capacité pour héberger les volumes de stockage.
+
+Voirlink:https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-quickstart-set-up-account-create-volumes?tabs=azure-portal["Configurer Azure NetApp Files et créer un volume NFS"^] de mettre en place un pool de capacités ANF.
+
+
+
+==== 3. Provisionner une machine virtuelle Azure pour Oracle
+
+En fonction de votre charge de travail, déterminez le type de machine virtuelle Azure dont vous avez besoin ainsi que la taille du processeur virtuel et de la RAM de la machine virtuelle à déployer pour Oracle.  Ensuite, depuis la console Azure, cliquez sur l’icône VM pour lancer le workflow de déploiement de la VM.
+
+. Depuis la page Machine virtuelle Azure, cliquez sur *Créer*, puis choisissez *Machine virtuelle Azure*.
++
+image:db-ora-azure-anf-vm-001.png["Cette capture d’écran montre la liste des machines virtuelles Azure disponibles."]
+
+. Choisissez l’ID d’abonnement pour le déploiement, puis choisissez le groupe de ressources, la région, le nom d’hôte, l’image de machine virtuelle, la taille et la méthode d’authentification.  Accédez à la page Disque.
++
+image:db-ora-azure-anf-vm-002-a.png["Cette capture d’écran montre l’entrée de la page Créer une machine virtuelle."] image:db-ora-azure-anf-vm-002-b.png["Cette capture d’écran montre des entrées supplémentaires pour la page Créer une machine virtuelle."]
+
+. Choisissez *SSD premium* pour la redondance locale du système d'exploitation et laissez le disque de données vide car les disques de données sont montés à partir du stockage ANF.  Accédez à la page Réseau.
++
+image:db-ora-azure-anf-vm-003.png["Cette capture d’écran montre l’entrée de la page Créer des disques de machine virtuelle."]
+
+. Choisissez le VNet et le sous-réseau.  Allouer une adresse IP publique pour l’accès à la machine virtuelle externe.  Ensuite, allez sur la page Gestion.
++
+image:db-ora-azure-anf-vm-004.png["Cette capture d’écran montre des entrées supplémentaires pour la page Créer une machine virtuelle."]
+
+. Conservez tous les paramètres par défaut pour la gestion et passez à la page Avancé.
++
+image:db-ora-azure-anf-vm-005.png["Cette capture d’écran montre l’entrée de la page Créer une gestion de machine virtuelle."]
+
+. Conservez tous les paramètres par défaut pour la page Avancé, sauf si vous devez personnaliser une machine virtuelle après le déploiement avec des scripts personnalisés.  Ensuite, allez à la page Tags.
++
+image:db-ora-azure-anf-vm-006.png["Cette capture d’écran montre l’entrée de la page Créer une machine virtuelle avancée."]
+
+. Ajoutez une balise pour la VM si vous le souhaitez.  Ensuite, accédez à la page Réviser + créer.
++
+image:db-ora-azure-anf-vm-007.png["Cette capture d’écran montre l’entrée pour la page Créer des balises de machine virtuelle."]
+
+. Le workflow de déploiement exécute une validation sur la configuration et, si la validation réussit, cliquez sur *Créer* pour créer la machine virtuelle.
++
+image:db-ora-azure-anf-vm-008.png["Cette capture d'écran montre l'entrée pour la page de révision et de création de Créer une machine virtuelle"]
+
+
+
+
+
+==== 4. Provisionner les volumes de base de données ANF pour Oracle
+
+Vous devez créer trois volumes NFS pour un pool de capacité ANF pour les volumes binaires, de données et de journaux Oracle respectivement.
+
+. Depuis la console Azure, sous la liste des services Azure, cliquez sur Azure NetApp Files pour ouvrir un workflow de création de volume.  Si vous disposez de plusieurs comptes de stockage ANF, cliquez sur le compte à partir duquel vous souhaitez provisionner des volumes.
++
+image:db-ora-azure-anf-vols-006.png["Cette capture d’écran montre la page Services Azure, avec ANF en surbrillance."]
+
+. Sous votre compte de stockage NetApp , cliquez sur *Volumes*, puis sur *Ajouter un volume* pour créer de nouveaux volumes Oracle.
++
+image:db-ora-azure-anf-vols-001-a.png["Cette capture d’écran montre l’écran d’accueil d’un compte de stockage NetApp ."] image:db-ora-azure-anf-vols-001.png["Cette capture d’écran montre les volumes disponibles pour le compte de stockage NetApp ."]
+
+. En tant que bonne pratique, identifiez les volumes Oracle avec le nom d'hôte de la machine virtuelle comme préfixe, suivi du point de montage sur l'hôte, tel que u01 pour le binaire Oracle, u02 pour les données Oracle et u03 pour le journal Oracle.  Choisissez le même VNet pour le volume que pour la VM.  Cliquez sur *Suivant : Protocole>*.
++
+image:db-ora-azure-anf-vols-002.png["Écran de création de volume."]
+
+. Choisissez le protocole NFS, ajoutez l'adresse IP de l'hôte Oracle au client autorisé et supprimez la stratégie par défaut qui autorise toutes les adresses IP 0.0.0.0/0.  Cliquez ensuite sur *Suivant : Tags>*.
++
+image:db-ora-azure-anf-vols-003.png["Saisie du protocole sur l'écran de création de volume."]
+
+. Ajoutez une balise de volume si vous le souhaitez.  Cliquez ensuite sur *Réviser + Créer>*.
++
+image:db-ora-azure-anf-vols-004.png["Balises saisies sur l'écran de création de volume."]
+
+. Si la validation réussit, cliquez sur *Créer* pour créer le volume.
++
+image:db-ora-azure-anf-vols-005.png["Étape de révision et de création de l'écran de création de volume."]
+
+
+
+
+
+== Installer et configurer Oracle sur Azure VM avec ANF
+
+L’équipe de solutions NetApp a créé de nombreuses boîtes à outils d’automatisation basées sur Ansible pour vous aider à déployer Oracle dans Azure en douceur.  Suivez ces étapes pour déployer Oracle sur une machine virtuelle Azure.
+
+
+
+=== Configurer un contrôleur Ansible
+
+Si vous n'avez pas configuré de contrôleur Ansible, consultezlink:https://docs.netapp.com/us-en/netapp-solutions-dataops/automation/automation-introduction.html["Automatisation des solutions NetApp ^"^] , qui contient des instructions détaillées sur la façon de configurer un contrôleur Ansible.
+
+
+
+=== Obtenir la boîte à outils d'automatisation du déploiement Oracle
+
+Clonez une copie de la boîte à outils de déploiement Oracle dans votre répertoire personnel sous l’ID utilisateur que vous utilisez pour vous connecter au contrôleur Ansible.
+
+[source, cli]
+----
+git clone https://github.com/NetApp-Automation/na_oracle19c_deploy.git
+----
+
+
+=== Exécutez la boîte à outils avec votre configuration
+
+Voir lelink:../automation/cli-automation.html#cli-deployment-oracle-19c-database["Déploiement CLI de la base de données Oracle 19c"^] pour exécuter le playbook avec la CLI.  Vous pouvez ignorer la partie ONTAP de la configuration des variables dans le fichier VARS global lorsque vous créez des volumes de base de données à partir de la console Azure plutôt que de l’interface de ligne de commande.
+
+
+NOTE: La boîte à outils déploie par défaut Oracle 19c avec RU 19.8.  Il peut être facilement adapté à tout autre niveau de patch avec des modifications mineures de configuration par défaut.  Les fichiers journaux actifs de la base de données de semences par défaut sont également déployés dans le volume de données.  Si vous avez besoin de fichiers journaux actifs sur le volume de journaux, ceux-ci doivent être déplacés après le déploiement initial.  Contactez l’équipe NetApp Solution pour obtenir de l’aide si nécessaire.
+
+
+
+== Configurer l'outil de sauvegarde AzAcSnap pour des instantanés cohérents avec les applications pour Oracle
+
+L’outil Azure Application-Consistent Snapshot (AzAcSnap) est un outil de ligne de commande qui permet la protection des données pour les bases de données tierces en gérant toute l’orchestration requise pour les mettre dans un état cohérent avec l’application avant de prendre un instantané de stockage.  Il ramène ensuite ces bases de données à un état opérationnel.  NetApp recommande d’installer l’outil sur l’hôte du serveur de base de données.  Consultez les procédures d’installation et de configuration suivantes.
+
+
+
+=== Installer l'outil AzAcSnap
+
+. Obtenez la version la plus récente dulink:https://aka.ms/azacsnapinstaller["le programme d'installation d'AzArcSnap"^] .
+. Copiez l’auto-installateur téléchargé sur le système cible.
+. Exécutez l’auto-installateur en tant qu’utilisateur root avec l’option d’installation par défaut.  Si nécessaire, rendez le fichier exécutable en utilisant le `chmod +x *.run` commande.
++
+[source, cli]
+----
+ ./azacsnap_installer_v5.0.run -I
+----
+
+
+
+
+=== Configurer la connectivité Oracle
+
+Les outils de capture instantanée communiquent avec la base de données Oracle et nécessitent un utilisateur de base de données disposant des autorisations appropriées pour activer ou désactiver le mode de sauvegarde.
+
+
+
+==== 1. Configurer l'utilisateur de la base de données AzAcSnap
+
+Les exemples suivants montrent la configuration de l'utilisateur de la base de données Oracle et l'utilisation de sqlplus pour la communication avec la base de données Oracle.  Les commandes d'exemple configurent un utilisateur (AZACSNAP) dans la base de données Oracle et modifient l'adresse IP, les noms d'utilisateur et les mots de passe selon le cas.
+
+. À partir de l’installation de la base de données Oracle, lancez sqlplus pour vous connecter à la base de données.
++
+[source, cli]
+----
+su – oracle
+sqlplus / AS SYSDBA
+----
+. Créer l'utilisateur.
++
+[source, cli]
+----
+CREATE USER azacsnap IDENTIFIED BY password;
+----
+. Accorder les autorisations à l'utilisateur.  Cet exemple définit l'autorisation pour l'utilisateur AZACSNAP pour permettre de mettre la base de données en mode de sauvegarde.
++
+[source, cli]
+----
+GRANT CREATE SESSION TO azacsnap;
+GRANT SYSBACKUP TO azacsnap;
+----
+. Modifiez l'expiration du mot de passe de l'utilisateur par défaut en illimité.
++
+[source, cli]
+----
+ALTER PROFILE default LIMIT PASSWORD_LIFE_TIME unlimited;
+----
+. Valider la connectivité azacsnap pour la base de données.
++
+[source, cli]
+----
+connect azacsnap/password
+quit;
+----
+
+
+
+
+==== 2. Configurer l'utilisateur Linux azacsnap pour l'accès à la base de données avec le portefeuille Oracle
+
+L'installation par défaut d'AzAcSnap crée un utilisateur du système d'exploitation azacsnap.  Son environnement shell Bash doit être configuré pour l'accès à la base de données Oracle avec le mot de passe stocké dans un portefeuille Oracle.
+
+. En tant qu'utilisateur root, exécutez le `cat /etc/oratab` commande pour identifier les variables ORACLE_HOME et ORACLE_SID sur l'hôte.
++
+[source, cli]
+----
+cat /etc/oratab
+----
+. Ajoutez les variables ORACLE_HOME, ORACLE_SID, TNS_ADMIN et PATH au profil bash utilisateur azacsnap.  Modifiez les variables selon vos besoins.
++
+[source, cli]
+----
+echo "export ORACLE_SID=ORATEST" >> /home/azacsnap/.bash_profile
+echo "export ORACLE_HOME=/u01/app/oracle/product/19800/ORATST" >> /home/azacsnap/.bash_profile
+echo "export TNS_ADMIN=/home/azacsnap" >> /home/azacsnap/.bash_profile
+echo "export PATH=\$PATH:\$ORACLE_HOME/bin" >> /home/azacsnap/.bash_profile
+----
+. En tant qu'utilisateur Linux azacsnap, créez le portefeuille.  Vous êtes invité à saisir le mot de passe du portefeuille.
++
+[source, cli]
+----
+sudo su - azacsnap
+
+mkstore -wrl $TNS_ADMIN/.oracle_wallet/ -create
+----
+. Ajoutez les informations d’identification de la chaîne de connexion au portefeuille Oracle.  Dans l'exemple de commande suivant, AZACSNAP est le ConnectString à utiliser par AzAcSnap, azacsnap est l'utilisateur de la base de données Oracle et AzPasswd1 est le mot de passe de la base de données de l'utilisateur Oracle.  Vous êtes à nouveau invité à saisir le mot de passe du portefeuille.
++
+[source, cli]
+----
+mkstore -wrl $TNS_ADMIN/.oracle_wallet/ -createCredential AZACSNAP azacsnap AzPasswd1
+----
+. Créer le `tnsnames-ora` déposer.  Dans l'exemple de commande suivant, HOST doit être défini sur l'adresse IP de la base de données Oracle et le SID du serveur doit être défini sur le SID de la base de données Oracle.
++
+[source, cli]
+----
+echo "# Connection string
+AZACSNAP=\"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.30.137.142)(PORT=1521))(CONNECT_DATA=(SID=ORATST)))\"
+" > $TNS_ADMIN/tnsnames.ora
+----
+. Créer le `sqlnet.ora` déposer.
++
+[source, cli]
+----
+echo "SQLNET.WALLET_OVERRIDE = TRUE
+WALLET_LOCATION=(
+    SOURCE=(METHOD=FILE)
+    (METHOD_DATA=(DIRECTORY=\$TNS_ADMIN/.oracle_wallet))
+) " > $TNS_ADMIN/sqlnet.ora
+----
+. Tester l'accès Oracle à l'aide du portefeuille.
++
+[source, cli]
+----
+sqlplus /@AZACSNAP as SYSBACKUP
+----
++
+Le résultat attendu de la commande :
+
++
+[listing]
+----
+[azacsnap@acao-ora01 ~]$ sqlplus /@AZACSNAP as SYSBACKUP
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Thu Sep 8 18:02:07 2022
+Version 19.8.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.8.0.0.0
+
+SQL>
+----
+
+
+
+
+=== Configurer la connectivité ANF
+
+Cette section explique comment activer la communication avec Azure NetApp Files (avec une machine virtuelle).
+
+. Dans une session Azure Cloud Shell, assurez-vous que vous êtes connecté à l’abonnement que vous souhaitez associer au principal de service par défaut.
++
+[source, cli]
+----
+az account show
+----
+. Si l'abonnement n'est pas correct, utilisez la commande suivante :
++
+[source, cli]
+----
+az account set -s <subscription name or id>
+----
+. Créez un principal de service à l’aide de l’interface de ligne de commande Azure comme dans l’exemple suivant :
++
+[source, cli]
+----
+az ad sp create-for-rbac --name "AzAcSnap" --role Contributor --scopes /subscriptions/{subscription-id} --sdk-auth
+----
++
+Le résultat attendu :
+
++
+[listing]
+----
+{
+  "clientId": "00aa000a-aaaa-0000-00a0-00aa000aaa0a",
+  "clientSecret": "00aa000a-aaaa-0000-00a0-00aa000aaa0a",
+  "subscriptionId": "00aa000a-aaaa-0000-00a0-00aa000aaa0a",
+  "tenantId": "00aa000a-aaaa-0000-00a0-00aa000aaa0a",
+  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+  "resourceManagerEndpointUrl": "https://management.azure.com/",
+  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+  "galleryEndpointUrl": "https://gallery.azure.com/",
+  "managementEndpointUrl": "https://management.core.windows.net/"
+}
+----
+. Coupez et collez le contenu de sortie dans un fichier appelé `oracle.json` stocké dans le répertoire bin de l'utilisateur Linux azacsnap et sécurisez le fichier avec les autorisations système appropriées.
+
+
+
+NOTE: Assurez-vous que le format du fichier JSON est exactement comme décrit ci-dessus, en particulier avec les URL entre guillemets doubles (").
+
+
+
+=== Terminer la configuration de l'outil AzAcSnap
+
+Suivez ces étapes pour configurer et tester les outils de capture instantanée.  Après un test réussi, vous pouvez effectuer le premier instantané de stockage cohérent avec la base de données.
+
+. Passez au compte utilisateur snapshot.
++
+[source, cli]
+----
+su - azacsnap
+----
+. Modifier l'emplacement des commandes.
++
+[source, cli]
+----
+cd /home/azacsnap/bin/
+----
+. Configurer un fichier de détails de sauvegarde de stockage.  Cela crée un `azacsnap.json` fichier de configuration.
++
+[source, cli]
+----
+azacsnap -c configure –-configuration new
+----
++
+Le résultat attendu avec trois volumes Oracle :
+
++
+[listing]
+----
+[azacsnap@acao-ora01 bin]$ azacsnap -c configure --configuration new
+Building new config file
+Add comment to config file (blank entry to exit adding comments): Oracle snapshot bkup
+Add comment to config file (blank entry to exit adding comments):
+Enter the database type to add, 'hana', 'oracle', or 'exit' (for no database): oracle
+
+=== Add Oracle Database details ===
+Oracle Database SID (e.g. CDB1): ORATST
+Database Server's Address (hostname or IP address): 172.30.137.142
+Oracle connect string (e.g. /@AZACSNAP): /@AZACSNAP
+
+=== Azure NetApp Files Storage details ===
+Are you using Azure NetApp Files for the database? (y/n) [n]: y
+--- DATA Volumes have the Application put into a consistent state before they are snapshot ---
+Add Azure NetApp Files resource to DATA Volume section of Database configuration? (y/n) [n]: y
+Full Azure NetApp Files Storage Volume Resource ID (e.g. /subscriptions/.../resourceGroups/.../providers/Microsoft.NetApp/netAppAccounts/.../capacityPools/Premium/volumes/...): /subscriptions/0efa2dfb-917c-4497-b56a-b3f4eadb8111/resourceGroups/ANFAVSRG/providers/Microsoft.NetApp/netAppAccounts/ANFAVSAcct/capacityPools/CapPool/volumes/acao-ora01-u01
+Service Principal Authentication filename or Azure Key Vault Resource ID (e.g. auth-file.json or https://...): oracle.json
+Add Azure NetApp Files resource to DATA Volume section of Database configuration? (y/n) [n]: y
+Full Azure NetApp Files Storage Volume Resource ID (e.g. /subscriptions/.../resourceGroups/.../providers/Microsoft.NetApp/netAppAccounts/.../capacityPools/Premium/volumes/...): /subscriptions/0efa2dfb-917c-4497-b56a-b3f4eadb8111/resourceGroups/ANFAVSRG/providers/Microsoft.NetApp/netAppAccounts/ANFAVSAcct/capacityPools/CapPool/volumes/acao-ora01-u02
+Service Principal Authentication filename or Azure Key Vault Resource ID (e.g. auth-file.json or https://...): oracle.json
+Add Azure NetApp Files resource to DATA Volume section of Database configuration? (y/n) [n]: n
+--- OTHER Volumes are snapshot immediately without preparing any application for snapshot ---
+Add Azure NetApp Files resource to OTHER Volume section of Database configuration? (y/n) [n]: y
+Full Azure NetApp Files Storage Volume Resource ID (e.g. /subscriptions/.../resourceGroups/.../providers/Microsoft.NetApp/netAppAccounts/.../capacityPools/Premium/volumes/...): /subscriptions/0efa2dfb-917c-4497-b56a-b3f4eadb8111/resourceGroups/ANFAVSRG/providers/Microsoft.NetApp/netAppAccounts/ANFAVSAcct/capacityPools/CapPool/volumes/acao-ora01-u03
+Service Principal Authentication filename or Azure Key Vault Resource ID (e.g. auth-file.json or https://...): oracle.json
+Add Azure NetApp Files resource to OTHER Volume section of Database configuration? (y/n) [n]: n
+
+=== Azure Managed Disk details ===
+Are you using Azure Managed Disks for the database? (y/n) [n]: n
+
+=== Azure Large Instance (Bare Metal) Storage details ===
+Are you using Azure Large Instance (Bare Metal) for the database? (y/n) [n]: n
+
+Enter the database type to add, 'hana', 'oracle', or 'exit' (for no database): exit
+
+Editing configuration complete, writing output to 'azacsnap.json'.
+----
+. En tant qu’utilisateur Linux azacsnap, exécutez la commande de test azacsnap pour une sauvegarde Oracle.
++
+[source, cli]
+----
+cd ~/bin
+azacsnap -c test --test oracle --configfile azacsnap.json
+----
++
+Le résultat attendu :
+
++
+[listing]
+----
+[azacsnap@acao-ora01 bin]$ azacsnap -c test --test oracle --configfile azacsnap.json
+BEGIN : Test process started for 'oracle'
+BEGIN : Oracle DB tests
+PASSED: Successful connectivity to Oracle DB version 1908000000
+END   : Test process complete for 'oracle'
+[azacsnap@acao-ora01 bin]$
+----
+. Exécutez votre première sauvegarde instantanée.
++
+[source, cli]
+----
+azacsnap -c backup –-volume data --prefix ora_test --retention=1
+----
+

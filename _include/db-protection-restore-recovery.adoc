@@ -1,0 +1,24 @@
+= 
+:allow-uri-read: 
+
+
+[.underline]*Planification du manuel de réplication des journaux*
+
+*Configurer et lancer le modèle de tâche.*
+
+. Copiez le modèle de travail précédemment créé.
++
+.. Accédez à Ressources → Modèles.
+.. Recherchez le modèle de configuration ONTAP/ CVO et, à l'extrême droite, cliquez sur Copier le modèle
+.. Cliquez sur Modifier le modèle sur le modèle copié et remplacez le nom par Playbook de restauration et de récupération.
+.. Conservez le même inventaire, le même projet et les mêmes informations d'identification pour le modèle.
+.. Sélectionnez ora_recovery.yml comme playbook à exécuter.
+.. Les variables resteront les mêmes, mais l'adresse IP du cluster CVO devra être définie dans la variable dst_cluster_ip.
+.. Cliquez sur Enregistrer.
+
+
++
+
+NOTE: Ce playbook ne sera pas exécuté tant que vous ne serez pas prêt à restaurer votre base de données sur le site distant.
+
+

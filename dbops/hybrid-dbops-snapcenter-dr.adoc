@@ -1,0 +1,184 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-snapcenter-dr.html 
+summary: solutions de bases de données cloud hybrides avec flux de travail SnapCenter DR 
+keywords: 'netapp, solutions, database, SnapCenter, DR, "business continuity", "disaster recovery"' 
+---
+= Flux de travail de reprise après sinistre
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Les entreprises ont adopté le cloud public comme une ressource viable et une destination pour la reprise après sinistre.  SnapCenter rend ce processus aussi transparent que possible.  Ce flux de travail de récupération après sinistre est très similaire au flux de travail de clonage, mais la récupération de la base de données s'exécute sur le dernier journal disponible qui a été répliqué dans le cloud pour récupérer toutes les transactions commerciales possibles.  Cependant, il existe des étapes de pré-configuration et de post-configuration supplémentaires spécifiques à la reprise après sinistre.
+
+
+
+== Cloner une base de données de production Oracle sur site vers le cloud pour la reprise après sinistre
+
+. Pour valider que la récupération du clone s'exécute via le dernier journal disponible, nous avons créé une petite table de test et inséré une ligne.  Les données de test seront récupérées après une récupération complète du dernier journal disponible.
++
+image:snapctr-ora-dr-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Connectez-vous à SnapCenter en tant qu'ID utilisateur de gestion de base de données pour Oracle.  Accédez à l’onglet Ressources, qui affiche les bases de données Oracle protégées par SnapCenter.
++
+image:snapctr-ora-dr-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez le groupe de ressources de journal Oracle et cliquez sur Sauvegarder maintenant pour exécuter manuellement une sauvegarde du journal Oracle afin de vider la dernière transaction vers la destination dans le cloud.  Dans un scénario DR réel, la dernière transaction récupérable dépend de la fréquence de réplication du volume du journal de la base de données vers le cloud, qui dépend à son tour de la politique RTO ou RPO de l'entreprise.
++
+image:snapctr-ora-dr-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-ora-dr-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+
+NOTE: SnapMirror asynchrone perd les données qui n'ont pas atteint la destination cloud dans l'intervalle de sauvegarde du journal de base de données dans un scénario de reprise après sinistre.  Pour minimiser la perte de données, des sauvegardes de journaux plus fréquentes peuvent être planifiées.  Cependant, il existe une limite à la fréquence de sauvegarde des journaux qui est techniquement réalisable.
+
+. Sélectionnez la dernière sauvegarde du journal sur la ou les sauvegardes du miroir secondaire et montez la sauvegarde du journal.
++
+image:snapctr-ora-dr-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-ora-dr-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez la dernière sauvegarde complète de la base de données et cliquez sur Cloner pour lancer le flux de travail de clonage.
++
+image:snapctr-ora-dr-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez un ID de base de données clone unique sur l'hôte.
++
+image:snapctr-ora-dr-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Provisionnez un volume de journal et montez-le sur le serveur DR cible pour la zone de récupération flash Oracle et les journaux en ligne.
++
+image:snapctr-ora-dr-009.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-ora-dr-010.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+
+NOTE: La procédure de clonage Oracle ne crée pas de volume de journal, qui doit être provisionné sur le serveur DR avant le clonage.
+
+. Sélectionnez l'hôte de clonage cible et l'emplacement où placer les fichiers de données, les fichiers de contrôle et les journaux de rétablissement.
++
+image:snapctr-ora-dr-011.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez les informations d’identification pour le clone.  Renseignez les détails de la configuration Oracle Home sur le serveur cible.
++
+image:snapctr-ora-dr-012.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les scripts à exécuter avant le clonage.  Les paramètres de la base de données peuvent être ajustés si nécessaire.
++
+image:snapctr-ora-dr-013.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez Jusqu'à annulation comme option de récupération afin que la récupération parcoure tous les journaux d'archives disponibles pour récupérer la dernière transaction répliquée vers l'emplacement cloud secondaire.
++
+image:snapctr-ora-dr-014.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez le serveur SMTP pour la notification par e-mail si nécessaire.
++
+image:snapctr-ora-dr-015.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé du clone DR.
++
+image:snapctr-ora-dr-016.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Les bases de données clonées sont enregistrées auprès de SnapCenter immédiatement après la fin du clonage et sont ensuite disponibles pour la protection de sauvegarde.
++
+image:snapctr-ora-dr-016-a.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Validation et configuration du clone post-DR pour Oracle
+
+. Validez la dernière transaction de test qui a été vidée, répliquée et récupérée à l’emplacement DR dans le cloud.
++
+image:snapctr-ora-dr-017.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurer la zone de récupération flash.
++
+image:snapctr-ora-dr-018.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez l'écouteur Oracle pour l'accès utilisateur.
+. Séparez le volume cloné du volume source répliqué.
+. Réplication inversée du cloud vers le serveur local et reconstruction du serveur de base de données local défaillant.
+
+
+
+NOTE: La division du clone peut entraîner une utilisation temporaire de l'espace de stockage bien supérieure au fonctionnement normal.  Cependant, une fois le serveur de base de données sur site reconstruit, de l'espace supplémentaire peut être libéré.
+
+
+
+== Cloner une base de données de production SQL sur site vers le cloud pour la reprise après sinistre
+
+. De même, pour valider que la récupération du clone SQL a été exécutée via le dernier journal disponible, nous avons créé une petite table de test et inséré une ligne.  Les données de test seront récupérées après une récupération complète du dernier journal disponible.
++
+image:snapctr-sql-dr-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Connectez-vous à SnapCenter avec un ID utilisateur de gestion de base de données pour SQL Server.  Accédez à l’onglet Ressources, qui affiche le groupe de ressources de protection SQL Server.
++
+image:snapctr-sql-dr-002.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Exécutez manuellement une sauvegarde du journal pour vider la dernière transaction à répliquer vers le stockage secondaire dans le cloud public.
++
+image:snapctr-sql-dr-003.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez la dernière sauvegarde complète de SQL Server pour le clone.
++
+image:snapctr-sql-dr-004.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Définissez les paramètres de clonage tels que le serveur de clonage, l'instance de clonage, le nom de clonage et l'option de montage.  L'emplacement de stockage secondaire où le clonage est effectué est renseigné automatiquement.
++
+image:snapctr-sql-dr-005.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Sélectionnez toutes les sauvegardes de journaux à appliquer.
++
+image:snapctr-sql-dr-006.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez les scripts facultatifs à exécuter avant ou après le clonage.
++
+image:snapctr-sql-dr-007.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Spécifiez un serveur SMTP si une notification par e-mail est souhaitée.
++
+image:snapctr-sql-dr-008.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Résumé du clone DR.  Les bases de données clonées sont immédiatement enregistrées auprès de SnapCenter et disponibles pour la protection de sauvegarde.
++
+image:snapctr-sql-dr-009.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
++
+image:snapctr-sql-dr-010.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+
+
+
+== Validation et configuration du clone post-DR pour SQL
+
+. Surveiller l'état du travail de clonage.
++
+image:snapctr-sql-dr-011.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Validez que la dernière transaction a été répliquée et récupérée avec tous les clones de fichiers journaux et la récupération.
++
+image:snapctr-sql-dr-012.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+. Configurez un nouveau répertoire de journaux SnapCenter sur le serveur DR pour la sauvegarde des journaux SQL Server.
+. Séparez le volume cloné du volume source répliqué.
+. Réplication inversée du cloud vers le serveur local et reconstruction du serveur de base de données local défaillant.
+
+
+
+
+== Où aller chercher de l’aide ?
+
+Si vous avez besoin d'aide avec cette solution et ces cas d'utilisation, veuillez rejoindre lelink:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.

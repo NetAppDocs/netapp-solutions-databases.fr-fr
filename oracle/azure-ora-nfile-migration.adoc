@@ -1,0 +1,165 @@
+---
+sidebar: sidebar 
+permalink: oracle/azure-ora-nfile-migration.html 
+summary: Cette section fournit des détails sur la façon de migrer une base de données Oracle depuis un emplacement local vers Azure NetApp Files et vice versa. 
+keywords: database, Oracle, Azure, ANF, Azure NetApp Files, migration 
+---
+= Migration de base de données sur site vers le cloud Azure
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Suite à la décision d'Oracle d'éliminer progressivement les bases de données à instance unique, de nombreuses organisations ont converti les bases de données Oracle à instance unique en bases de données de conteneurs multilocataires.  Cela permet la relocalisation facile d'un sous-ensemble de bases de données de conteneurs appelées PDB vers le cloud avec l'option de disponibilité maximale, ce qui minimise les temps d'arrêt pendant la migration.
+
+Cependant, si vous disposez toujours d'une seule instance d'une base de données Oracle, elle peut d'abord être convertie en base de données de conteneur multilocataire avant de tenter la relocalisation de PDB.
+
+Les sections suivantes fournissent des détails sur la migration des bases de données Oracle sur site vers le cloud Azure dans les deux scénarios.
+
+
+
+== Conversion d'une instance unique non-CDB en PDB dans une CDB multilocataire
+
+Si vous disposez toujours d'une base de données Oracle à instance unique, elle doit être convertie en base de données conteneur multilocataire, que vous souhaitiez la migrer vers le cloud ou non, car Oracle cessera bientôt de prendre en charge les bases de données à instance unique.
+
+Les procédures suivantes connectent une base de données d'instance unique à une base de données conteneur en tant que base de données enfichable ou PDB.
+
+. Créez une base de données de conteneur shell sur le même hôte que la base de données à instance unique dans un emplacement séparé. `ORACLE_HOME` .
+. Arrêtez la base de données à instance unique et redémarrez-la en mode lecture seule.
+. Exécutez le `DBMS_PDB.DESCRIBE` procédure pour générer les métadonnées de la base de données.
++
+[source, cli]
+----
+BEGIN
+  DBMS_PDB.DESCRIBE(
+    pdb_descr_file => '/home/oracle/ncdb.xml');
+END;
+/
+----
+. Arrêtez la base de données à instance unique.
+. Démarrez la base de données du conteneur.
+. Exécutez le `DBMS_PDB.CHECK_PLUG_COMPATIBILITY` fonction permettant de déterminer si le non-CDB est compatible avec le CDB.
++
+[source, cli]
+----
+SET SERVEROUTPUT ON
+DECLARE
+  compatible CONSTANT VARCHAR2(3) :=
+    CASE DBMS_PDB.CHECK_PLUG_COMPATIBILITY(
+           pdb_descr_file => '/disk1/oracle/ncdb.xml',
+           pdb_name       => 'NCDB')
+    WHEN TRUE THEN 'YES'
+    ELSE 'NO'
+END;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(compatible);
+END;
+/
+----
++
+Si la sortie est OUI, alors le non-CDB est compatible et vous pouvez passer à l’étape suivante.
+
++
+Si la sortie est NON, alors le non-CDB n'est pas compatible et vous pouvez vérifier le `PDB_PLUG_IN_VIOLATIONS` voir pour voir pourquoi ce n'est pas compatible.  Toutes les violations doivent être corrigées avant de continuer.  Par exemple, toute incompatibilité de version ou de correctif doit être résolue en exécutant une mise à niveau ou l'utilitaire opatch.  Après avoir corrigé les violations, exécutez `DBMS_PDB.CHECK_PLUG_COMPATIBILITY` encore une fois pour garantir que le non-CDB est compatible avec le CDB.
+
+. Branchez l'instance unique non-CDB.
++
+[source, cli]
+----
+CREATE PLUGGABLE DATABASE ncdb USING '/home/oracle/ncdb.xml'
+  COPY
+  FILE_NAME_CONVERT = ('/disk1/oracle/dbs/', '/disk2/oracle/ncdb/')
+;
+----
++
+
+NOTE: S'il n'y a pas suffisamment d'espace sur l'hôte, le `NOCOPY` l'option peut être utilisée pour créer le PDB.  Dans ce cas, une instance unique non-CDB n'est pas utilisable après le branchement en tant que PDB car les fichiers de données d'origine ont été utilisés pour le PDB.  Assurez-vous de créer une sauvegarde avant la conversion afin d'avoir quelque chose sur lequel vous appuyer en cas de problème.
+
+. Commencez par la mise à niveau PDB après la conversion si la version entre la source à instance unique non-CDB et la cible CDB est différente.  Pour la conversion de la même version, cette étape peut être ignorée.
++
+[source, cli]
+----
+sqlplus / as sysdba;
+alter session set container=ncdb
+alter pluggable database open upgrade;
+exit;
+dbupgrade -c ncdb -l /home/oracle
+----
++
+Consultez le fichier journal de mise à niveau dans le `/home/oracle` annuaire.
+
+. Ouvrez la base de données enfichable, vérifiez les violations du plug-in pdb et recompilez les objets non valides.
++
+[source, cli]
+----
+alter pluggable database ncdb open;
+alter session set container=ncdb;
+select message from pdb_plug_in_violations where type like '%ERR%' and status <> 'RESOLVED';
+$ORACLE_HOME/perl/bin/perl $ORACLE_HOME/rdbms/admin/catcon.pl -n 1 -c 'ncdb' -e -b utlrp -d $ORACLE_HOME/rdbms/admin utlrp.sql
+----
+. Exécuter `noncdb_to_pdb.sql` pour mettre à jour le dictionnaire de données.
++
+[source, cli]
+----
+sqlplus / as sysdba
+alter session set container=ncdb;
+@$ORACLE_HOME/rdbms/admin/noncdb_to_pdb.sql;
+----
++
+Arrêtez et redémarrez la base de données du conteneur.  La base de données NCDB est sortie du mode restreint.
+
+
+
+
+
+== Migrer les bases de données Oracle sur site vers Azure avec la relocalisation PDB
+
+La relocalisation Oracle PDB avec l'option de disponibilité maximale utilise la technologie de clonage à chaud PDB, qui permet la disponibilité de la PDB source pendant que la PDB est copiée vers la cible.  Lors du basculement, les connexions utilisateur sont automatiquement redirigées vers le PDB cible.  Ainsi, les temps d’arrêt sont minimisés indépendamment de la taille du PDB.  NetApp fournit une boîte à outils basée sur Ansible qui automatise la procédure de migration.
+
+. Créez une CDB dans le cloud public Azure sur une machine virtuelle Azure avec la même version et le même niveau de correctif.
+. À partir du contrôleur Ansible, clonez une copie de la boîte à outils d’automatisation.
++
+[source, cli]
+----
+git clone https://github.com/NetApp-Automation/na_ora_aws_migration.git
+----
+. Lisez les instructions dans le fichier README.
+. Configurez les fichiers de variables d'hôte Ansible pour les serveurs Oracle source et cible et le fichier de configuration de l'hôte du serveur de base de données pour la résolution de noms.
+. Installez les prérequis du contrôleur Ansible sur le contrôleur Ansible.
++
+[source, cli]
+----
+ansible-playbook -i hosts requirements.yml
+ansible-galaxy collection install -r collections/requirements.yml --force
+----
+. Exécutez toutes les tâches de pré-migration sur le serveur local.
++
+[source, cli]
+----
+ansible-playbook -i hosts ora_pdb_relocate.yml -u admin -k -K -t ora_pdb_relo_onprem
+----
++
+
+NOTE: L'utilisateur administrateur est l'utilisateur de gestion sur l'hôte du serveur Oracle sur site avec des privilèges sudo.  L'utilisateur administrateur est authentifié avec un mot de passe.
+
+. Exécutez la relocalisation Oracle PDB depuis le site vers l’hôte Azure Oracle cible.
++
+[source, cli]
+----
+ansible-playbook -i hosts ora_pdb_relocate.yml -u azureuser --private-key db1.pem -t ora_pdb_relo_primary
+----
++
+
+NOTE: Le contrôleur Ansible peut être situé sur site ou dans le cloud Azure.  Le contrôleur a besoin d’une connectivité à l’hôte du serveur Oracle local et à l’hôte de la machine virtuelle Azure Oracle.  Le port de base de données Oracle (tel que 1521) est ouvert entre l’hôte du serveur Oracle local et l’hôte de la machine virtuelle Azure Oracle.
+
+
+
+
+
+== Options supplémentaires de migration de base de données Oracle
+
+Veuillez consulter la documentation Microsoft pour des options de migration supplémentaires :link:https://learn.microsoft.com/en-us/azure/architecture/example-scenario/oracle-migrate/oracle-migration-overview["Processus de décision de migration de la base de données Oracle"^] .

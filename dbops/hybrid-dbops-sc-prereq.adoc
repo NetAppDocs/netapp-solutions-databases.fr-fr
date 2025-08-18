@@ -1,0 +1,52 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-prereq.html 
+summary: Certaines conditions préalables doivent être configurées à la fois sur site et dans le cloud avant l’exécution des charges de travail de base de données cloud hybride.  La section suivante fournit un résumé de haut niveau de ce processus et les liens suivants fournissent des informations supplémentaires sur la configuration système nécessaire. 
+keywords: workflow, prerequisites, licensing, networking, security 
+---
+= Configuration des prérequis
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Certaines conditions préalables doivent être configurées à la fois sur site et dans le cloud avant l’exécution des charges de travail de base de données cloud hybride.  La section suivante fournit un résumé de haut niveau de ce processus et les liens suivants fournissent des informations supplémentaires sur la configuration système nécessaire.
+
+
+
+== Sur place
+
+* Installation et configuration de SnapCenter
+* Configuration du stockage du serveur de base de données sur site
+* Conditions d'obtention de licence
+* Réseau et sécurité
+* Automation
+
+
+
+
+== Cloud public
+
+* Une connexion NetApp Cloud Central
+* Accès réseau depuis un navigateur Web vers plusieurs points de terminaison
+* Un emplacement réseau pour un connecteur
+* Autorisations du fournisseur de cloud
+* Mise en réseau pour les services individuels
+
+
+Considérations importantes :
+
+. Où déployer le connecteur Cloud Manager ?
+. Dimensionnement et architecture de Cloud Volume ONTAP
+. Nœud unique ou haute disponibilité ?
+
+
+Les liens suivants fournissent plus de détails :
+
+link:hybrid-dbops-sc-prereq-onprem.html["Sur place"]
+
+link:hybrid-dbops-sc-prereq-cloud.html["Cloud public"]

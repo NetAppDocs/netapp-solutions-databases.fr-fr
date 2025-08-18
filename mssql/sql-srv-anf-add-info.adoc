@@ -1,0 +1,27 @@
+---
+sidebar: sidebar 
+permalink: mssql/sql-srv-anf-add-info.html 
+keywords:  
+summary:  
+---
+= Où trouver des informations supplémentaires
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Pour en savoir plus sur les informations décrites dans ce document, reportez-vous aux liens Web suivants :
+
+* Architectures de solutions utilisant Azure NetApp Files
++
+https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-solution-architectures["https://docs.microsoft.com/en-us/azure/azure-netapp-files/azure-netapp-files-solution-architectures"^]
+
+* Avantages de l'utilisation Azure NetApp Files pour le déploiement de SQL Server
++
+https://docs.microsoft.com/en-us/azure/azure-netapp-files/solutions-benefits-azure-netapp-files-sql-server["https://docs.microsoft.com/en-us/azure/azure-netapp-files/solutions-benefits-azure-netapp-files-sql-server"^]
+
+

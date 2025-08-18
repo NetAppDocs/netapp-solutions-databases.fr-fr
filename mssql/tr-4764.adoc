@@ -1,0 +1,21 @@
+---
+sidebar: sidebar 
+permalink: mssql/tr-4764.html 
+keywords:  
+summary:  
+---
+= TR-4764 : Meilleures pratiques pour Microsoft SQL Server avec NetApp EF-Series
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+Mitch Blackburn, Pat Sinthusan, NetApp
+
+[role="lead"]
+Ce guide des meilleures pratiques est destiné à aider les administrateurs de stockage et les administrateurs de base de données à déployer avec succès Microsoft SQL Server sur le stockage NetApp EF-Series.
+
+link:https://www.netapp.com/pdf.html?item=/media/17086-tr4764pdf.pdf["TR-4764 : Meilleures pratiques pour Microsoft SQL Server avec NetApp EF-Series"^]

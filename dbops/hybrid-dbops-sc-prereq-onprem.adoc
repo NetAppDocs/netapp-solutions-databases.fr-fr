@@ -1,0 +1,171 @@
+---
+sidebar: sidebar 
+permalink: dbops/hybrid-dbops-sc-prereq-onprem.html 
+summary: 'Les tâches décrites dans cette section doivent être effectuées sur site pour préparer l"environnement de charge de travail de la base de données cloud hybride SnapCenter .' 
+keywords: prerequisites, on prem, on premises, installation, security, automation 
+---
+= Prérequis sur site
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Les tâches suivantes doivent être effectuées sur site pour préparer l’environnement de charge de travail de la base de données cloud hybride SnapCenter .
+
+
+
+== Installation et configuration de SnapCenter
+
+L'outil NetApp SnapCenter est une application Windows qui s'exécute généralement dans un environnement de domaine Windows, bien que le déploiement de groupe de travail soit également possible.  Il est basé sur une architecture à plusieurs niveaux qui comprend un serveur de gestion centralisé (le serveur SnapCenter ) et un plug-in SnapCenter sur les hôtes du serveur de base de données pour les charges de travail de base de données.  Voici quelques considérations clés pour le déploiement d’un cloud hybride.
+
+* *Instance unique ou déploiement HA.*  Le déploiement HA fournit une redondance en cas de défaillance d'un seul serveur d'instance SnapCenter .
+* *Résolution de nom.*  Le DNS doit être configuré sur le serveur SnapCenter pour résoudre tous les hôtes de base de données ainsi que sur le SVM de stockage pour la recherche directe et inverse.  Le DNS doit également être configuré sur les serveurs de base de données pour résoudre le serveur SnapCenter et le SVM de stockage pour la recherche directe et inverse.
+* *Configuration du contrôle d'accès basé sur les rôles (RBAC).*  Pour les charges de travail de base de données mixtes, vous souhaiterez peut-être utiliser RBAC pour séparer la responsabilité de gestion pour différentes plates-formes de base de données, telles qu'un administrateur pour la base de données Oracle ou un administrateur pour SQL Server.  Les autorisations nécessaires doivent être accordées à l'utilisateur administrateur de la base de données.
+* *Activer la stratégie de sauvegarde basée sur des politiques.*  Pour garantir la cohérence et la fiabilité des sauvegardes.
+* *Ouvrez les ports réseau nécessaires sur le pare-feu.*  Pour que le serveur SnapCenter sur site communique avec les agents installés sur l'hôte de base de données cloud.
+* *Les ports doivent être ouverts pour autoriser le trafic SnapMirror entre le cloud local et le cloud public.*  Le serveur SnapCenter s'appuie sur ONTAP SnapMirror pour répliquer les sauvegardes Snapshot sur site vers les SVM de stockage CVO cloud.
+
+
+Après une planification et une réflexion minutieuses avant l'installation, cliquez icilink:https://docs.netapp.com/us-en/snapcenter/install/requirements-to-install-snapcenter-server.html["Prérequis d'installation de SnapCenter"^] pour plus de détails sur l'installation et la configuration de SnapCenter .
+
+
+
+== Configuration du stockage du serveur de base de données sur site
+
+Les performances de stockage jouent un rôle important dans les performances globales des bases de données et des applications.  Une disposition de stockage bien conçue peut non seulement améliorer les performances de la base de données, mais également faciliter la gestion de la sauvegarde et de la récupération de la base de données.  Plusieurs facteurs doivent être pris en compte lors de la définition de votre configuration de stockage, notamment la taille de la base de données, le taux de modification des données attendu pour la base de données et la fréquence à laquelle vous effectuez des sauvegardes.
+
+La connexion directe des LUN de stockage à la machine virtuelle invitée via NFS ou iSCSI pour les charges de travail de base de données virtualisées offre généralement de meilleures performances que le stockage alloué via VMDK.  NetApp recommande la disposition de stockage pour une grande base de données SQL Server sur les LUN illustrée dans la figure suivante.
+
+image:storage-layout-sqlsvr-large.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+La figure suivante montre la disposition de stockage recommandée par NetApp pour les bases de données SQL Server de petite ou moyenne taille sur les LUN.
+
+image:storage-layout-sqlsvr-smallmedium.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+
+NOTE: Le répertoire Log est dédié à SnapCenter pour effectuer la récupération du journal des transactions pour la récupération de la base de données.  Pour une base de données extra-large, plusieurs LUN peuvent être alloués à un volume pour de meilleures performances.
+
+Pour les charges de travail de base de données Oracle, SnapCenter prend en charge les environnements de base de données sauvegardés par le stockage ONTAP qui sont montés sur l'hôte en tant que périphériques physiques ou virtuels.  Vous pouvez héberger l’intégralité de la base de données sur un ou plusieurs périphériques de stockage en fonction de la criticité de l’environnement.  En règle générale, les clients isolent les fichiers de données sur un stockage dédié de tous les autres fichiers tels que les fichiers de contrôle, les fichiers de rétablissement et les fichiers journaux d'archivage.  Cela aide les administrateurs à restaurer rapidement (fichier unique ONTAP SnapRestore) ou à cloner une grande base de données critique (échelle pétaoctet) à l'aide de la technologie Snapshot en quelques secondes à quelques minutes.
+
+image:storage-layout-oracle-typical.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Pour les charges de travail critiques sensibles à la latence, un volume de stockage dédié doit être déployé sur différents types de fichiers Oracle pour obtenir la meilleure latence possible.  Pour une base de données volumineuse, plusieurs LUN (NetApp recommande jusqu'à huit) par volume doivent être alloués aux fichiers de données.
+
+image:storage-layout-oracle-dedicated.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Pour les bases de données Oracle plus petites, SnapCenter prend en charge les dispositions de stockage partagé dans lesquelles vous pouvez héberger plusieurs bases de données ou une partie d'une base de données sur le même volume de stockage ou LUN.  À titre d’exemple de cette disposition, vous pouvez héberger des fichiers de données pour toutes les bases de données sur un groupe de disques +DATA ASM ou un groupe de volumes.  Le reste des fichiers (fichiers de rétablissement, journaux d'archivage et fichiers de contrôle) peut être hébergé sur un autre groupe de disques ou groupe de volumes dédié (LVM).  Un tel scénario de déploiement est illustré ci-dessous.
+
+image:storage-layout-oracle-shared.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
+
+Pour faciliter le déplacement des bases de données Oracle, le binaire Oracle doit être installé sur un LUN distinct inclus dans la politique de sauvegarde régulière.  Cela garantit qu'en cas de déplacement de la base de données vers un nouvel hôte de serveur, la pile Oracle peut être démarrée pour la récupération sans aucun problème potentiel dû à un binaire Oracle désynchronisé.
+
+
+
+== Conditions d'obtention de licence
+
+SnapCenter est un logiciel sous licence de NetApp.  Il est généralement inclus dans une licence ONTAP sur site.  Cependant, pour le déploiement de cloud hybride, une licence cloud pour SnapCenter est également requise pour ajouter CVO à SnapCenter en tant que destination de réplication de données cible.  Veuillez consulter les liens suivants pour la licence standard basée sur la capacité de SnapCenter pour plus de détails :
+
+link:https://docs.netapp.com/us-en/snapcenter/install/concept_snapcenter_standard_controller_based_licenses.html["Licences standard SnapCenter basées sur la capacité"^]
+
+
+
+== Réseau et sécurité
+
+Dans une opération de base de données hybride qui nécessite une base de données de production sur site extensible vers le cloud pour le développement/test et la reprise après sinistre, la mise en réseau et la sécurité sont des facteurs importants à prendre en compte lors de la configuration de l'environnement et de la connexion au cloud public à partir d'un centre de données sur site.
+
+Les clouds publics utilisent généralement un cloud privé virtuel (VPC) pour isoler différents utilisateurs au sein d'une plate-forme de cloud public.  Au sein d'un VPC individuel, la sécurité est contrôlée à l'aide de mesures telles que des groupes de sécurité configurables en fonction des besoins des utilisateurs pour le verrouillage d'un VPC.
+
+La connectivité du centre de données sur site au VPC peut être sécurisée via un tunnel VPN.  Sur la passerelle VPN, la sécurité peut être renforcée à l'aide de règles NAT et de pare-feu qui bloquent les tentatives d'établissement de connexions réseau entre les hôtes sur Internet et les hôtes à l'intérieur du centre de données de l'entreprise.
+
+Pour les considérations de mise en réseau et de sécurité, examinez les règles CVO entrantes et sortantes pertinentes pour le cloud public de votre choix :
+
+* link:https://docs.netapp.com/us-en/occm/reference_security_groups.html#inbound-rules["Règles de groupe de sécurité pour CVO - AWS"]
+* link:https://docs.netapp.com/us-en/occm/reference_networking_azure.html#outbound-internet-access["Règles de groupe de sécurité pour CVO - Azure"]
+* link:https://docs.netapp.com/us-en/occm/reference_networking_gcp.html#outbound-internet-access["Règles de pare-feu pour CVO - GCP"]
+
+
+
+
+== Utilisation de l'automatisation Ansible pour synchroniser les instances de base de données entre les locaux et le cloud (facultatif)
+
+Pour simplifier la gestion d'un environnement de base de données cloud hybride, NetApp recommande fortement, mais n'exige pas, que vous déployiez un contrôleur Ansible pour automatiser certaines tâches de gestion, telles que la synchronisation des instances de calcul sur site et dans le cloud.  Ceci est particulièrement important car une instance de calcul désynchronisée dans le cloud peut rendre la base de données récupérée dans le cloud sujette aux erreurs en raison de packages de noyau manquants et d'autres problèmes.
+
+La capacité d'automatisation d'un contrôleur Ansible peut également être utilisée pour augmenter SnapCenter pour certaines tâches, telles que la division de l'instance SnapMirror pour activer la copie des données DR pour la production.
+
+Suivez ces instructions pour configurer votre nœud de contrôle Ansible pour les machines RedHat ou CentOS :
+
+. Exigences pour le nœud de contrôle Ansible :
++
+.. Une machine RHEL/CentOS avec les packages suivants installés :
++
+... Python3
+... Pip3
+... Ansible (version supérieure à 2.10.0)
+... Git
+
+
+
+
+
+
+Si vous disposez d'une nouvelle machine RHEL/CentOS sans les exigences ci-dessus installées, suivez les étapes ci-dessous pour configurer cette machine comme nœud de contrôle Ansible :
+
+. Activer le référentiel Ansible pour RHEL-8/RHEL-7
++
+.. Pour RHEL-8 (exécutez la commande ci-dessous en tant que root)
++
+[source, cli]
+----
+subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
+----
+.. Pour RHEL-7 (exécutez la commande ci-dessous en tant que root)
++
+[source, cli]
+----
+subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
+----
+
+
+. Collez le contenu ci-dessous dans le terminal
++
+[source, cli]
+----
+sudo yum -y install python3 >> install.log
+sudo yum -y install python3-pip >> install.log
+python3 -W ignore -m pip --disable-pip-version-check install ansible >> install.log
+sudo yum -y install git >> install.log
+----
+
+
+Suivez ces instructions pour configurer votre nœud de contrôle Ansible pour les machines Ubuntu ou Debian :
+
+. Exigences pour le nœud de contrôle Ansible :
++
+.. Une machine Ubuntu/Debian avec les packages suivants installés :
++
+... Python3
+... Pip3
+... Ansible (version supérieure à 2.10.0)
+... Git
+
+
+
+
+
+
+Si vous disposez d'une nouvelle machine Ubuntu/Debian sans les exigences ci-dessus installées, suivez les étapes ci-dessous pour configurer cette machine comme nœud de contrôle Ansible :
+
+. Collez le contenu ci-dessous dans le terminal
++
+[source, cli]
+----
+sudo apt-get -y install python3 >> outputlog.txt
+sudo apt-get -y install python3-pip >> outputlog.txt
+python3 -W ignore -m pip --disable-pip-version-check install ansible >> outputlog.txt
+sudo apt-get -y install git >> outputlog.txt
+----
+

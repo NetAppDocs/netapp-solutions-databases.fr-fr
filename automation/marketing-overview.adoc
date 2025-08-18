@@ -1,0 +1,63 @@
+---
+sidebar: sidebar 
+permalink: automation/marketing-overview.html 
+keywords: Linux, RHEL Oracle19c, NFS, ONTAP, Ansible 
+summary: 'Cette page décrit la méthode automatisée de déploiement d"Oracle19c sur le stockage NetApp ONTAP .' 
+---
+= Présentation de la solution
+:hardbreaks:
+:allow-uri-read: 
+:nofooter: 
+:icons: font
+:linkattrs: 
+:imagesdir: ../media/
+
+
+[role="lead"]
+Cette page décrit la méthode automatisée de déploiement d'Oracle19c sur le stockage NetApp ONTAP .
+
+
+
+== Déploiement automatisé d'Oracle19c pour ONTAP sur NFS
+
+Les organisations automatisent leurs environnements pour gagner en efficacité, accélérer les déploiements et réduire les efforts manuels.  Des outils de gestion de configuration comme Ansible sont utilisés pour rationaliser les opérations de base de données d’entreprise.  Dans cette solution, nous démontrons comment vous pouvez utiliser Ansible pour automatiser le provisionnement et la configuration d'Oracle 19c avec NetApp ONTAP.  En permettant aux administrateurs de stockage, aux administrateurs système et aux administrateurs de bases de données de déployer de manière cohérente et rapide de nouveaux systèmes de stockage, de configurer des serveurs de base de données et d'installer le logiciel Oracle 19c, vous bénéficiez des avantages suivants :
+
+* Éliminez les complexités de conception et les erreurs humaines, et mettez en œuvre un déploiement cohérent et reproductible ainsi que les meilleures pratiques
+* Réduisez le temps nécessaire à la mise à disposition du stockage, à la configuration des hôtes de base de données et à l'installation d'Oracle
+* Augmenter la productivité des administrateurs de bases de données, de systèmes et de stockage
+* Activez la mise à l'échelle du stockage et des bases de données en toute simplicité
+
+
+NetApp fournit aux clients des modules et des rôles Ansible validés pour accélérer le déploiement, la configuration et la gestion du cycle de vie de votre environnement de base de données Oracle.  Cette solution fournit des instructions et un code de playbook Ansible pour vous aider à :
+
+* Créer et configurer le stockage NFS ONTAP pour la base de données Oracle
+* Installer Oracle 19c sur RedHat Enterprise Linux 7/8 ou Oracle Linux 7/8
+* Configurer Oracle 19c sur le stockage NFS ONTAP
+
+
+Pour plus de détails ou pour commencer, veuillez consulter les vidéos de présentation ci-dessous.
+
+
+
+=== Déploiements AWX/Tour
+
+Partie 1 : Prise en main, exigences, détails d'automatisation et configuration initiale d'AWX/Tower
+
+.Déploiement d'AWX
+video::d844a9c3-4eb3-4512-bf21-b01200f09f66[panopto]
+Partie 2 : Variables et exécution du Playbook
+
+.Exécution du manuel de jeu AWX
+video::6da1b960-e1c9-4950-b750-b01200f0bdfa[panopto]
+
+
+=== Déploiement CLI
+
+Partie 1 : Prise en main, exigences, détails d'automatisation et configuration de l'hôte de contrôle Ansible
+
+.Déploiement CLI
+video::373e7f2a-c101-4292-a3e4-b01200f0d078[panopto]
+Partie 2 : Variables et exécution du Playbook
+
+.Exécution du manuel de jeu CLI
+video::d58ebdb0-8bac-4ef9-b4d1-b01200f95047[panopto]
