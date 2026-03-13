@@ -71,7 +71,7 @@ Pour des performances optimales et pour éviter les problèmes de performances, 
 ----
 sysctl -a | grep tcp.*.slot_table
 ----
-* Le tableau suivant fournit les options de montage NFS recommandées pour Linux NFSv3 - instance unique.
+* Le tableau suivant présente les options de montage NFS recommandées pour Linux - instance unique.
 +
 image:aws-ora-fsx-ec2-nfs-001.png["Figure montrant une boîte de dialogue d'entrée/sortie ou représentant un contenu écrit"]
 

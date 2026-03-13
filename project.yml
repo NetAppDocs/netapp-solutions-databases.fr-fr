@@ -102,6 +102,11 @@ sidebar:
           url: "/oracle/azure-ora-nfile-migration.html"
     - title: Google Cloud
       entries:
+      - title: Déploiement d'une instance Oracle autonome sur Google NetApp Volumes
+          avec NFS
+        pdf-filename: Déploiement d'une instance Oracle autonome sur Google NetApp
+          Volumes via NFS
+        url: "/oracle/gcp-ora-gcnv-si-nfs.html"
       - title: Optimisez la sauvegarde et la récupération Oracle VLDB avec la fusion
           incrémentielle sur serveur sur Google Cloud NetApp Volumes
         pdf-filename: Optimisez la sauvegarde et la récupération Oracle VLDB avec

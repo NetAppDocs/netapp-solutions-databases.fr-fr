@@ -26,4 +26,5 @@ L'objectif de cette documentation est de fournir des processus, des procédures 
 
 Pour en savoir plus sur la solution et le cas d'utilisation, regardez la vidéo de présentation suivante :
 
-link:https://www.netapp.tv/insight/details/30000?playlist_id=275&mcid=04891225598830484314259903524057913910["Modernisez votre base de données Oracle avec le cloud hybride dans AWS et FSx ONTAP, Partie 1 - Cas d'utilisation et architecture de la solution"^]
+.Modernisez votre base de données Oracle avec le cloud hybride dans AWS et FSx ONTAP, Partie 1 - Cas d'utilisation et architecture de la solution
+video::b1a7bb05-caea-44a0-bd9a-b01200f372e9[panopto,width=360]
