@@ -1,0 +1,388 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-standby-database.html 
+keywords: oracle database, standby database, data guard, gcnv replication, iscsi, asm, oracle restart, managed recovery, physical standby 
+summary: 'Créez la base de données physique Oracle de secours en utilisant la réplication au niveau de la couche de stockage Google Cloud NetApp Volumes, les snapshots ou les clones pour accélérer l"initialisation du secours. Cette procédure couvre la configuration du listener et du pfile de secours, l"initialisation des volumes de secours avec la réplication GCNV, la finalisation de l"instance Oracle, la création des journaux de restauration de secours, l"activation de l"application des journaux de restauration avec la récupération gérée, et l"enregistrement du secours auprès d"Oracle Restart.' 
+---
+= Créez la base de données de secours Oracle avec l’amorçage de la couche de stockage Google Cloud NetApp Volumes
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Créez la base de données de secours physique Oracle en utilisant la réplication au niveau de la couche de stockage Google Cloud NetApp Volumes, les snapshots ou les clones pour accélérer l'initialisation de la base de données de secours par rapport aux méthodes RMAN traditionnelles. Cette procédure couvre la configuration du listener, la création du pfile de secours, l'initialisation des volumes de secours avec la réplication GCNV, la finalisation de l'instance Oracle et l'enregistrement de la base de données de secours auprès d'Oracle Restart. Tous les niveaux HA effectuent ces étapes. Pour le niveau *Prod HA (Data Guard + FSFO)*, continuez avec xref:gcnv-oracle-standby-finalize-dg.adoc[Finalisation de Data Guard] avant de configurer xref:gcnv-oracle-data-guard.adoc[Data Guard Broker, basculement rapide automatique et Observer].
+
+
+
+== Étape 1 : Configurer les paramètres de l’écouteur et de Data Guard
+
+Configurez l'écouteur sur les deux hôtes de base de données pour prendre en charge les connexions Data Guard, y compris le  `_DGMGRL` service requis pour le broker. Configurez le fichier de mots de passe et les paramètres de journalisation d'archive sur la base de données principale.
+
+. Configurez l'écouteur principal et vérifiez l'environnement sur `oracdb1`:
++
+[source, bash]
+----
+sudo su - oracle
+. ~/.bash_profile        # ORACLE_SID=orcl, ORACLE_HOME set
+----
+. Configurez l'écouteur de secours sur `oracdb2` pour inclure les `orcls` et `orcls_DGMGRL` services :
++
+[source, bash]
+----
+GRID_HOME=/u01/app/26ai/grid
+sudo -u grid tee "$GRID_HOME/network/admin/listener.ora" >/dev/null <<'EOF'
+LISTENER =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = oracdb2.example.internal)(PORT = 1521)))
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC = (GLOBAL_DBNAME = orcls)        (ORACLE_HOME = /u01/app/oracle/product/26ai/db_1) (SID_NAME = orcls))
+    (SID_DESC = (GLOBAL_DBNAME = orcls_DGMGRL) (ORACLE_HOME = /u01/app/oracle/product/26ai/db_1) (SID_NAME = orcls)))
+EOF
+----
+. Redémarrez le service d'écoute via Oracle Restart sur les deux hôtes et vérifiez que le  `_DGMGRL` service est enregistré :
++
+[source, bash]
+----
+sudo -u grid bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=$GRID_HOME
+$GRID_HOME/bin/srvctl stop listener
+$GRID_HOME/bin/srvctl start listener
+$GRID_HOME/bin/lsnrctl status
+'
+----
++
+`lsnrctl status` doit lister  `<SID>` et  `<SID>_DGMGRL`.
+
+
+
+
+
+== Étape 2 : Préparez le fichier pfile de secours et NOMOUNT
+
+Préparez l'instance de base de données de secours en copiant le fichier de mots de passe depuis la base principale, en créant un fichier pfile init.ora minimal avec les paramètres Data Guard, puis en démarrant l'instance en mode NOMOUNT.
+
+. Copiez le fichier de mot de passe principal sur l'hôte de secours à l'aide d'IAP et `gcloud compute scp` :
++
+[source, bash]
+----
+PRIMARY_ZONE=us-west1-a       # zone of oracdb1
+STANDBY_ZONE=us-west1-b       # zone of oracdb2
+
+gcloud compute scp \
+  oracdb1:/u01/app/oracle/product/26ai/db_1/dbs/orapworcl ./orapworcl \
+  --zone=$PRIMARY_ZONE --tunnel-through-iap
+
+gcloud compute scp \
+  ./orapworcl oracdb2:/u01/app/oracle/product/26ai/db_1/dbs/orapworcls \
+  --zone=$STANDBY_ZONE --tunnel-through-iap
+----
+. Interrogez la valeur du paramètre  `compatible` à partir de la base de données principale :
++
+[source, bash]
+----
+# On oracdb1
+sudo -u oracle sqlplus -s / as sysdba \
+  <<<"SELECT value FROM v\$parameter WHERE name='compatible';"
+----
+. Créez le fichier pfile de secours sur `oracdb2`, définissez le propriétaire du fichier de mots de passe et démarrez l'instance en mode NOMOUNT. Remplacez la valeur  `compatible` de l'étape précédente par  `<COPY_FROM_PRIMARY>` :
++
+[source, bash]
+----
+sudo -u oracle mkdir -p /u01/app/oracle/admin/orcls/adump
+sudo chown oracle:oinstall /u01/app/oracle/product/26ai/db_1/dbs/orapworcls
+sudo chmod 0600 /u01/app/oracle/product/26ai/db_1/dbs/orapworcls
+
+sudo -u oracle tee /u01/app/oracle/product/26ai/db_1/dbs/initorcls.ora >/dev/null <<'EOF'
+*.db_name='orcl'
+*.db_unique_name='orcls'
+*.audit_file_dest='/u01/app/oracle/admin/orcls/adump'
+*.diagnostic_dest='/u01/app/oracle'
+*.compatible='<COPY_FROM_PRIMARY>'
+*.sga_target=3072m
+*.pga_aggregate_target=1024m
+*.processes=320
+*.remote_login_passwordfile='EXCLUSIVE'
+*.standby_file_management='AUTO'
+*.fal_server='orcl'
+*.log_archive_config='DG_CONFIG=(orcl,orcls)'
+*.log_archive_dest_1='LOCATION=+RECO VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=orcls'
+*.log_archive_dest_2='SERVICE=orcl AFFIRM SYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=orcl'
+*.log_archive_dest_state_2='DEFER'
+*.log_archive_format='%t_%s_%r.arc'
+*.dg_broker_start=TRUE
+*.undo_tablespace='UNDOTBS1'
+*.open_cursors=300
+*.db_create_file_dest='+DATA'
+*.db_create_online_log_dest_1='+DATA'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=25000m
+EOF
+
+echo "orcls:/u01/app/oracle/product/26ai/db_1:N" | sudo tee -a /etc/oratab
+
+sudo -u oracle bash -c '
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export ORACLE_SID=orcls
+sqlplus / as sysdba <<SQL
+STARTUP NOMOUNT PFILE=/u01/app/oracle/product/26ai/db_1/dbs/initorcls.ora;
+EXIT
+SQL
+'
+----
++
+L'instance de secours est maintenant en mode NOMOUNT sans fichiers de données jusqu'à <<gcnv-standby-initialization,Étape 3 : Initialiser le stockage de secours avec GCNV>>.
+
+
+
+
+
+== Étape 3 : Initialiser le stockage de secours avec GCNV
+
+Initialisez les volumes de secours dans  `oracle-pool-b`, attachez-les à  `oracdb2`, montez les groupes de disques ASM et finalisez l’instance de secours à l’état MOUNT.
+
+Utilisez la réplication GCNV pour l’amorçage en production et l’amorçage par instantané pour les flux de travail de laboratoire ponctuels.
+
+
+
+=== Choisissez le chemin de seeding
+
+Choisissez la méthode d'ensemencement de secours en fonction de votre environnement et de vos exigences de récupération.
+
+* *Recommandé pour la production :* Utilisez le chemin de réplication dans <<create-volume-replications,Chemin de réplication : créer et synchroniser les réplications>> et <<cutover-quiesce-stop-repl-attach,Chemin de réplication : basculer et attacher les volumes de secours>>.
+* *Alternative pour les laboratoires :* Utilisez <<snapshot-seed,Chemin alternatif : initialisation à partir d’un instantané>>.
+
+
+Tous les chemins se rejoignent à <<standby-iscsi-and-asm-before-rman,Monter les groupes de disques ASM de secours>> et <<oracle-finalize,Finalisez l'instance de secours>>.
+
+
+
+=== Vérifiez les prérequis
+
+Confirmez les prérequis suivants avant d'initialiser les volumes de secours.
+
+* `gcloud netapp`avec prise en charge de la réplication de volumes.
+* Deux pools en mode *par défaut* à des emplacements différents (`oracle-pool-a`, `oracle-pool-b`).
+* Volumes sources sur le pool principal attachés `oracdb1-hg`; volumes de destination créés par réplication.
+* Exécutez la réplication depuis Cloud Shell ou un poste de travail — pas depuis des machines virtuelles de base de données.
+* Sur `oracdb2`, configuration complète de l’hôte iSCSI et ASM à partir de xref:gcnv-oracle-provision-storage.adoc#configure-iscsi-and-multipath[Étape 4], xref:gcnv-oracle-provision-storage.adoc#partition-asm-backing-devices[Étape 5] et xref:gcnv-oracle-provision-storage.adoc#format-and-mount-u01[Étape 6].
++
+[source, bash]
+----
+export PROJECT=<your-gcp-project>
+export LOC_A=us-west1-a
+export LOC_B=us-west1-b
+export DEST_POOL="projects/${PROJECT}/locations/${LOC_B}/storagePools/oracle-pool-b"
+----
+* Créez un pool de secours si nécessaire :
++
+[source, bash]
+----
+gcloud netapp storage-pools create oracle-pool-b \
+  --project="${PROJECT}" --location="${LOC_B}" \
+  --service-level=flex --type=unified --mode=default \
+  --capacity=1024 --network=name=<your-vpc>
+----
+
+
+
+
+=== Créer et synchroniser des réplications
+
+Créez des relations de réplication entre les volumes principaux et les volumes de secours, puis attendez la fin de la synchronisation initiale.
+
+[source, bash]
+----
+gcloud netapp volumes replications create repl-oracdb2-data \
+  --project="${PROJECT}" --location="${LOC_A}" --volume=oracdb1_data \
+  --replication-schedule=EVERY_10_MINUTES \
+  --destination-volume-parameters="storage_pool=${DEST_POOL},volume_id=oracdb2_data,share_name=oracdb2_data"
+
+gcloud netapp volumes replications create repl-oracdb2-reco \
+  --project="${PROJECT}" --location="${LOC_A}" --volume=oracdb1_reco \
+  --replication-schedule=EVERY_10_MINUTES \
+  --destination-volume-parameters="storage_pool=${DEST_POOL},volume_id=oracdb2_reco,share_name=oracdb2_reco"
+----
++
+
+Attendez que  `mirrorState` soit  `MIRRORED` et que la synchronisation initiale soit terminée pour chaque réplication.
+
+
+
+=== Basculez et attachez les volumes de veille
+
+Mettez au repos le serveur principal, arrêtez la réplication après la synchronisation finale et attachez les volumes de destination au groupe d'hôtes de secours.
+
+Sur le système principal, mettez en veille les écritures et capturez les métadonnées de restauration :
+
+[source]
+----
+ALTER DATABASE BEGIN BACKUP;
+SELECT CURRENT_SCN FROM V$DATABASE;
+ALTER DATABASE CREATE STANDBY CONTROLFILE AS '/tmp/orcls_stby.ctl';
+----
+Autorisez un dernier cycle de réplication, puis arrêtez les réplications :
+
+[source, bash]
+----
+gcloud netapp volumes replications stop repl-oracdb2-data \
+  --project="${PROJECT}" --location="${LOC_A}" --volume=oracdb1_data --force
+
+gcloud netapp volumes replications stop repl-oracdb2-reco \
+  --project="${PROJECT}" --location="${LOC_A}" --volume=oracdb1_reco --force
+----
+Attachez les volumes de destination à  `oracdb2-hg` (les LUN répliqués peuvent conserver les noms sources) :
+
+[source, bash]
+----
+HG=$(gcloud netapp host-groups describe oracdb2-hg --project="${PROJECT}" \
+  --location=us-west1 --format='value(name)')
+
+gcloud netapp volumes update oracdb2_data --project="${PROJECT}" --location="${LOC_B}" \
+  --block-devices="name=oracdb1_data_lun,host-groups=${HG},os-type=LINUX"
+----
+Copiez le fichier de contrôle de secours vers  `oracdb2`, puis mettez fin au mode de sauvegarde sur le serveur principal :
+
+[source]
+----
+ALTER DATABASE END BACKUP;
+----
+
+
+=== Initialiser à partir d'un instantané
+
+Utilisez ce chemin pour un ensemencement ponctuel en laboratoire lorsque la réplication continue n'est pas nécessaire.
+
+Pour un environnement de test ponctuel, créez un instantané source et créez des volumes de secours à partir de cet instantané dans `oracle-pool-b` (Cloud Console ou API). Attachez les volumes créés à `oracdb2-hg`, puis continuez avec <<standby-iscsi-and-asm-before-rman,Monter les groupes de disques ASM de secours>>.
+
+
+
+=== Monter les groupes de disques ASM de secours
+
+Sur l'hôte de secours, découvrez les chemins de stockage connectés et montez les groupes de disques ASM avant la restauration de la base de données.
+
+Sur `oracdb2`, connectez-vous aux portails iSCSI du pool de secours et analysez à nouveau les périphériques multipath. Si les en-têtes de disque ASM correspondent à la dénomination principale dans un flux de travail de laboratoire, utilisez des alias de style principal (par exemple `ora_oracdb1_data_01`, `ora_oracdb1_arch_01`), définissez `asm_diskstring='/dev/mapper/ora_oracdb1_*p*'`et vérifiez que le propriétaire de la partition est `grid:asmadmin`, puis montez les groupes de disques :
+
+[source]
+----
+ALTER DISKGROUP DATA MOUNT FORCE;
+ALTER DISKGROUP RECO MOUNT FORCE;
+ALTER DISKGROUP FRA MOUNT FORCE;
+----
+
+
+=== Finalisez l'instance de secours
+
+Restaurez le fichier de contrôle de secours, récupérez jusqu'au SCN capturé, convertissez en secours physique et démarrez la récupération gérée.
+
+[source]
+----
+STARTUP NOMOUNT;
+RESTORE STANDBY CONTROLFILE FROM '/tmp/orcls_stby.ctl';
+ALTER DATABASE MOUNT;
+RECOVER DATABASE UNTIL SCN <quiesce_scn>;
+ALTER DATABASE CONVERT TO PHYSICAL STANDBY;
+SHUTDOWN IMMEDIATE;
+STARTUP MOUNT;
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT FROM SESSION;
+----
+À ce stade, le système de secours devrait être `PHYSICAL STANDBY` et `MOUNTED`avec la récupération gérée démarrée.
+
+*Prochaines étapes spécifiques à chaque niveau :*
+
+* *Haute disponibilité de production (sans Data Guard) :* Passez directement à <<register-standby-with-oracle-restart,Étape 4 : Enregistrez le serveur de secours auprès d’Oracle Restart>>.
+* *Haute disponibilité de production (Data Guard + FSFO) :* Continuez vers <<register-standby-with-oracle-restart,Étape 4 : Enregistrez le serveur de secours auprès d’Oracle Restart>>, puis procédez à xref:gcnv-oracle-standby-finalize-dg.adoc[Étapes de finalisation de Data Guard].
+
+
+
+
+== Étape 4 : Enregistrez le serveur de secours auprès d’Oracle Restart
+
+Enregistrez la base de données de secours auprès d'Oracle Restart afin que les redémarrages permettent la récupération automatique des groupes de disques ASM, le montage de la base de données de secours et le redémarrage de la récupération gérée. Ajoutez également le service applicatif aux deux ressources de base de données.
+
+. Capturez l’emplacement du spfile depuis la base de données de secours et enregistrez-le auprès d’Oracle Restart sur `oracdb2`. Remplacez  `<STANDBY_SPFILE_PATH>` à partir de la requête (souvent sous  `+DATA`) :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export ORACLE_SID=orcls
+sqlplus -s / as sysdba <<< "SHOW PARAMETER spfile;"
+'
+
+sudo -u oracle bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$GRID_HOME/bin:$PATH
+
+srvctl add database \
+  -db orcls \
+  -dbname orcl \
+  -oraclehome /u01/app/oracle/product/26ai/db_1 \
+  -spfile <STANDBY_SPFILE_PATH> \
+  -pwfile /u01/app/oracle/product/26ai/db_1/dbs/orapworcls \
+  -role PHYSICAL_STANDBY \
+  -startoption MOUNT \
+  -stopoption IMMEDIATE \
+  -diskgroup DATA,RECO,FRA
+
+srvctl config database -db orcls
+srvctl status database -db orcls
+'
+----
+. Vérifiez et mettez à jour la ressource de base de données principale sur `oracdb1` afin d'inclure toutes les dépendances du groupe de disques ASM :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$GRID_HOME/bin:$PATH
+srvctl config database -db orcl
+srvctl modify database -db orcl -diskgroup DATA,RECO,FRA
+srvctl config database -db orcl
+'
+----
+. Ajoutez le service applicatif à la ressource de base de données de secours (`orcls` sur  `oracdb2`). Utilisez  `role PRIMARY` des deux côtés afin que  `orclapp` soit disponible après le basculement :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$GRID_HOME/bin:$PATH
+
+srvctl add service \
+  -db orcls \
+  -service orclapp \
+  -pdb orclpdb \
+  -role PRIMARY \
+  -policy AUTOMATIC
+
+srvctl config service -db orcls -service orclapp
+'
+----
+. Vérifiez la ressource de base de données de secours sur `oracdb2` :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$GRID_HOME/bin:$PATH
+srvctl status database -db orcls
+'
+----
+
+
+
+
+== Et ensuite ?
+
+*Spécifique au niveau :*
+
+* *Haute disponibilité de production (sans Data Guard) :* Pour maintenir une cible de récupération basée sur la réplication du stockage, l’initialisation de la base de secours est terminée et la base de secours est enregistrée auprès d’Oracle Restart en tant qu’instance de sauvegarde.
+* *Haute disponibilité de production (Data Guard + FSFO) :* Pour activer le basculement géré par le broker et le basculement rapide, poursuivez avec xref:gcnv-oracle-standby-finalize-dg.adoc[Finalisez la base de données de secours pour Data Guard].
+

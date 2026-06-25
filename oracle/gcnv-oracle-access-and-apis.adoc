@@ -1,0 +1,58 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-access-and-apis.html 
+keywords: oracle database, google cloud netapp volumes, gcnv, access, api, permissions, psa, iap, networking 
+summary: 'Vérifiez les accès requis, l"activation des API, les prérequis réseau et la synchronisation horaire pour Google Cloud NetApp Volumes avant de déployer Oracle Database 26ai en haute disponibilité.' 
+---
+= Vérifiez l'accès aux volumes Google Cloud NetApp et aux API pour Oracle Database 26ai
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Vérifiez l'accès à Google Cloud NetApp Volumes, l'activation de l'API, les prérequis réseau et la synchronisation de l'heure avant de provisionner le stockage iSCSI GCNV pour la haute disponibilité d'Oracle Database 26ai sur Google Compute Engine.
+
+
+
+== Accès et API
+
+Utilisez cette liste de contrôle pour vérifier les autorisations et la disponibilité de la plateforme avant de commencer le provisionnement de l'hôte et du stockage.
+
+* Des rôles GCP sont attribués aux machines virtuelles Compute Engine, au pare-feu VPC (ou aux politiques de pare-feu), aux volumes NetApp et à la mise en réseau PSA (y compris la validation du projet hôte VPC partagé, le cas échéant).
+* *NetApp Volumes API* est activée (Console Cloud -> APIs & Services, ou commande ci-dessous).
+* Le VPC et le sous-réseau sont configurés avec une *plage PSA* pour GCNV : https://cloud.google.com/netapp/volumes/docs/get-started/configure-access/networking["Configurer le réseau pour les volumes NetApp"].
+* L'heure est synchronisée sur les trois machines virtuelles (commandes ci-dessous).
++
+[source, bash]
+----
+gcloud services enable netapp.googleapis.com
+chronyc tracking
+timedatectl
+----
+
+
+[cols="1,2"]
+|===
+| Tâche | Accès requis 
+
+
+| Créer des machines virtuelles Compute Engine | Administrateur d'instance de calcul (ou équivalent) 
+
+
+| Pare-feu / Politiques de pare-feu | Administrateur réseau ou administrateur de stratégie délégué 
+
+
+| Créer des pools et des volumes GCNV | Administrateur NetApp Volumes 
+
+
+| Configurer PSA | Administrateur réseau dans le projet hôte 
+
+
+| SSH via IAP | Utilisateur du tunnel sécurisé IAP + connexion au système d'exploitation (le cas échéant) 
+|===
+
+
+== Et ensuite ?
+
+Pour provisionner une infrastructure hôte Oracle à haute disponibilité, poursuivez avec xref:gcnv-oracle-provision-compute.adoc[Provisionnez des instances Google Compute Engine pour Oracle Database 26ai].

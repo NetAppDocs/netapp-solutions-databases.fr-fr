@@ -2,7 +2,7 @@
 sidebar: sidebar 
 permalink: mssql/sql-srv-anf-factors-to-consider.html 
 keywords: performance, redundancy, high availability, storage configuration, continuously available shares, validation, 
-summary: Cette section décrit les différents problèmes que vous devez prendre en compte lors de Azure NetApp Files avec SQL Server dans le cloud. 
+summary: 'Cette section décrit les différents points à prendre en compte lors de l"utilisation d"Azure NetApp Files avec SQL Server dans le cloud.' 
 ---
 = Facteurs à prendre en compte
 :hardbreaks:
@@ -65,7 +65,7 @@ Les avantages de l’utilisation Azure NetApp Files pour SQL Server sont les sui
 *Remarques :*
 
 * Pour augmenter la redondance et la haute disponibilité, les machines virtuelles SQL Server doivent être dans le même https://docs.microsoft.com/en-us/azure/virtual-machines/availability-set-overview["ensemble de disponibilité"^] ou dans un autre https://docs.microsoft.com/en-us/azure/availability-zones/az-overview["zones de disponibilité"^] .  Tenez compte des exigences de chemin de fichier si des fichiers de données définis par l'utilisateur sont requis ; dans ce cas, sélectionnez SQL FCI plutôt que SQL AOAG.
-* Le chemin UNC suivant est pris en charge : file:///\\ANFSMB-b4ca.anf.test\SQLDB%20and%20\\ANFSMB-b4ca.anf.test\SQLDB\["\\ANFSMB-b4ca.anf.test\SQLDB et \\ANFSMB-b4ca.anf.test\SQLDB\"^] .
+* Les chemins UNC suivants sont pris en charge :  `\\ANFSMB-b4ca.anf.test\SQLDB` et  `\\ANFSMB-b4ca.anf.test\SQLDB\`.
 * Le chemin UNC de bouclage n'est pas pris en charge.
 * Pour le dimensionnement, utilisez les données historiques de votre environnement sur site.  Pour les charges de travail OLTP, faites correspondre les IOPS cibles aux exigences de performances en utilisant les charges de travail aux heures moyennes et de pointe ainsi que les compteurs de performances de lectures de disque/s et d'écritures de disque/s.  Pour les charges de travail d'entrepôt de données et de création de rapports, faites correspondre le débit cible en utilisant les charges de travail aux heures moyennes et de pointe et les octets de lecture et d'écriture sur disque/s.  Les valeurs moyennes peuvent être utilisées conjointement avec les capacités de remodelage du volume.
 

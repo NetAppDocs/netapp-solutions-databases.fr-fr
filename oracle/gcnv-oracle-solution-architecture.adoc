@@ -1,0 +1,138 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-solution-architecture.html 
+keywords: oracle database, google cloud netapp volumes, gcnv, iscsi, data guard, fsfo, architecture, topology, standby initialization 
+summary: 'Découvrez l"architecture de Google Cloud NetApp Volumes pour la haute disponibilité d"Oracle Database 26ai, y compris la conception du stockage bloc iSCSI, l"intégration de Data Guard, la réplication au niveau du stockage pour une initialisation accélérée du serveur de secours, et les responsabilités de la plateforme.' 
+---
+= Découvrez l'architecture de Google Cloud NetApp Volumes pour une haute disponibilité d'Oracle Database 26ai
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Google Cloud NetApp Volumes fournit un stockage bloc iSCSI haute performance pour les architectures haute disponibilité Oracle Database 26ai, avec une réplication au niveau du stockage qui accélère considérablement l'initialisation de la base de données de secours par rapport aux méthodes Oracle RMAN traditionnelles. Découvrez l'intégration de GCNV avec Oracle Data Guard, notamment les chemins de données de référence, la topologie de stockage et la répartition des responsabilités entre le stockage bloc de GCNV et la synchronisation continue de Data Guard.
+
+
+
+== Aperçu de l'architecture
+
+Cette architecture utilise le stockage bloc iSCSI *Google Cloud NetApp Volumes (GCNV)* pour assurer une haute disponibilité pour *Oracle Database 26ai* sur Google Cloud avec *Oracle Data Guard*.
+
+GCNV fournit un stockage bloc haute performance et accélère l'initialisation de la base de données de secours grâce à la réplication, aux instantanés et aux clones au niveau de la couche de stockage.
+
+Data Guard assure le *transport de journalisation continu*, la gestion des rôles et *l'orchestration du basculement* (Broker, Fast-Start Failover, Observer).
+
+[cols="1,3"]
+|===
+| Couche | Rôle 
+
+
+| GCNV | stockage bloc, initialisation en veille, réplication du stockage 
+
+
+| Data Guard | Synchronisation continue, application du redo, basculement, FSFO 
+|===
+La réplication GCNV réduit considérablement le temps d'initialisation de la base de données de secours par rapport à la duplication active RMAN en déplaçant les données au niveau de la *couche de stockage* au lieu de passer par les canaux de la base de données Oracle.
+
+Utilisez *GCNV replicate, snapshot, or clone* pour initialiser la base de données de secours, puis activez Data Guard pour une synchronisation continue et une haute disponibilité.
+
+[cols="1,3"]
+|===
+| Composant | Détail 
+
+
+| Hôtes de base de données | oracdb1 / oracdb2 - zones différentes, cinq volumes iSCSI GCNV chacun 
+
+
+| Stockage | /u01 + ASM +DATA, +RECO, +FRA sur GCNV (EXTERNAL) 
+
+
+| Initialisation en veille | Réplication/instantané/clonage GCNV -> Finalisation Oracle -> Data Guard 
+
+
+| HA | Redémarrage, veille physique (MOUNTED), Broker, FSFO, Observer (oradg-obs) 
+
+
+| Applications | Service orclapp (Étape 8.2) 
+|===
+
+
+=== Zonage
+
+Déployez un pool GCNV Flex Unified par zone de base de données et attribuez des volumes dédiés à chaque hôte. Utilisez les disques de démarrage uniquement pour le système d'exploitation.
+
+*Hors du périmètre :* TDE, RAC, NVMe/TCP, OEM et Active Data Guard (le standby reste *MOUNTED*).
+
+
+
+== Diagramme de référence d’architecture
+
+L'architecture de la solution propose trois chemins de données indépendants. La réplication du stockage et le transport des journaux de restauration Data Guard constituent des chemins distincts.
+
+image::gcnv-oracle-26ai-ha.png[Architecture de référence GCNV]
+
+.La réplication du stockage n'est pas équivalente à la réplication des journaux de restauration
+* Le chemin 1 déplace les fichiers de données au niveau GCNV pour l'initialisation de la base de données de secours.
+* Le chemin 2 maintient la synchronisation des bases de données après la bascule.
+* Le chemin 3 orchestre les transitions de rôle et le basculement automatique via Oracle Data Guard Broker et l'Observer.
+
+
+
+
+== Rôles de la plateforme
+
+Le tableau suivant récapitule quelle couche de la plateforme fournit les services de stockage et quelle couche assure la synchronisation de la base de données et le contrôle de basculement.
+
+[cols="1,3"]
+|===
+| Plate-forme | Fournit 
+
+
+| GCNV | Volumes iSCSI, snapshots, réplication de volumes (baseline + incrémentielle) - initialisation de secours 
+
+
+| Data Guard | Redo transport, MRP, Broker, FSFO - synchronisation continue et basculement 
+|===
+La réplication GCNV effectue une copie de base, puis des mises à jour incrémentielles par bloc conformément à la politique. Data Guard gère l'application des journaux de restauration et le FSFO après l'initialisation du serveur de secours.
+
+
+
+== Topologie et stockage
+
+Cette topologie répartit les rôles principal, de secours et d'observateur sur des zones distinctes et associe chaque hôte de base de données à des pools GCNV et des volumes iSCSI dédiés.
+
+[cols="1,1,1,1,2"]
+|===
+| Rôle | VM | Zone | Pool GCNV | Volumes (par hôte) 
+
+
+| Primaire | `oracdb1` | `us-west1-a` | `oracle-pool-a` | `ora_<host>_u01`, `ora_<host>_data_01/02`, `ora_<host>_arch_01`, `ora_<host>_fra_01` 
+
+
+| Attendre | `oracdb2` | `us-west1-b` | `oracle-pool-b` | Même modèle de dénomination 
+
+
+| Observateur | `oradg-obs` | `us-west1-c` | - | disque de démarrage uniquement 
+|===
+[cols="1,1,2"]
+|===
+| Stockage | Support | Utiliser 
+
+
+| Système d'exploitation | disque de démarrage GCE | Système d'exploitation uniquement 
+
+
+| `/u01` | GCNV iSCSI | Domiciles Grid/DB, staging (XFS) 
+
+
+| `+DATA` / `+RECO` / `+FRA` | GCNV iSCSI | ASM EXTERNAL - fichiers de données, archives, FRA 
+|===
+.Types de machines
+Exemple `n4-highmem-8` dans cette solution ; les charges de travail OLTP utilisent généralement  `c4-standard-*`.
+
+
+
+== Et ensuite ?
+
+Pour choisir le chemin de déploiement qui correspond à vos objectifs de restauration et de disponibilité, rendez-vous sur xref:gcnv-oracle-deployment-options.adoc[Découvrez les options de déploiement pour Oracle Database 26ai sur Google Cloud NetApp Volumes].

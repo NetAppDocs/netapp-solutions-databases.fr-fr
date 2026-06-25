@@ -1,0 +1,293 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-provision-storage.html 
+keywords: oracle database, google cloud netapp volumes, gcnv, iscsi, multipath, asm, storage pool, host group, iSCSI initiator 
+summary: Provisionnez le stockage iSCSI Google Cloud NetApp Volumes pour la haute disponibilité d’Oracle Database 26ai sur Google Compute Engine. Cette procédure couvre la création de pools de stockage Flex Unified, la définition des groupes d’hôtes, la création de volumes iSCSI pour chaque hôte de base de données, la configuration d’iSCSI et du multipath sous Linux, le partitionnement des périphériques de support ASM et le montage du système de fichiers /u01. 
+---
+= Provisionnez le stockage iSCSI Google Cloud NetApp Volumes pour Oracle Database 26ai
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Provisionnez le stockage bloc iSCSI Google Cloud NetApp Volumes pour la haute disponibilité d’Oracle Database 26ai sur Google Compute Engine. Cette procédure couvre la création de pools de stockage GCNV Flex Unified, la définition des groupes d’hôtes, la création de volumes iSCSI pour chaque hôte de base de données, la configuration d’iSCSI et de multipath sous Linux, le partitionnement des périphériques ASM, et le montage du  `/u01` système de fichiers.
+
+
+
+== Étape 1 : Créez des pools iSCSI GCNV
+
+Créez deux pools de stockage Flex Unified, un dans chaque zone de base de données, afin de fournir des volumes iSCSI aux hôtes principal et de secours. Chaque hôte de base de données utilise les volumes du pool de sa zone locale.
+
+. Créez deux pools de stockage à l'aide de la Cloud Console. Utilisez les spécifications du tableau ci-dessous et répétez le processus de création pour chaque zone :
++
+[cols="1,1,2"]
+|===
+| Nom du pool | Zone | Utilisé par 
+
+
+| `oracle-pool-a` | `us-west1-a` | `oracdb1` (primaire) 
+
+
+| `oracle-pool-b` | `us-west1-b` | `oracdb2` (attendre) 
+|===
++
+*NetApp Volumes → Pools de stockage → Créer* pour chaque pool :
+
++
+** *Niveau de service :* Flex (et non Premium)
+** *Type :* Unifié
+** *Zone :* correspond à la zone de la machine virtuelle de la base de données (`us-west1-a`/ `us-west1-b`)
+** *Avis important :* connecté à `oracle-vpc`
+** *Capacité :* dimensionnée en fonction de la charge de travail ; utiliser un débit/IOPS provisionné personnalisé lorsque le redo, la sauvegarde ou la restauration dépasse la marge par défaut (jusqu’à 5120 Mio/s ou 160K IOPS par pool, dans les limites du produit)
+
+
+. Attendez que les deux pools atteignent le statut  `READY` avant de continuer. Adaptez la taille des pools à l’encombrement de votre base de données (les tailles dans <<create-gcnv-iscsi-volumes,Étape 3 : Créer les volumes iSCSI GCNV>> sont des exemples) :
++
+[NOTE]
+====
+*Mode par défaut (ce guide) :* Les pools Flex Unified utilisent le mode par défaut (`--mode=default`). Créez des pools et des volumes iSCSI avec Cloud Console ou `gcloud netapp`. La réplication de volumes, les snapshots et les clones utilisent les API Google Cloud (xref:gcnv-oracle-standby-database.adoc#gcnv-standby-initialization[Étape 3 : Initialisation de la veille GCNV]).
+
+====
+
+
+
+
+== Étape 2 : Créez des groupes d’hôtes
+
+Créez un groupe d'hôtes par hôte de base de données afin que chaque machine virtuelle ne voie que ses propres volumes. Les hôtes principal et de secours ne doivent pas partager les volumes iSCSI GCNV afin de maintenir un stockage indépendant.
+
+. Créez le groupe d'hôtes pour  `oracdb1` à l'aide de la Cloud Console :
++
+*NetApp Volumes → Groupes d'hôtes → Créer*
+
++
+** *Nom:* `oracdb1-hg`
+** *Région:* `us-west1`
+** *Type :* Initiateur iSCSI
+** *Type de système d'exploitation :* Linux
+** *Hôtes :* collez l’IQN à partir de  `oracdb1` (la valeur de  `/etc/iscsi/initiatorname.iscsi`)
+** *Description :* « Hôte principal Oracle oracdb1 »
+** *Créer*
+
+
+. Répétez l'opération pour  `oracdb2` avec le nom  `oracdb2-hg` et l'IQN de `oracdb2`. L'hôte Observer ne nécessite aucune ressource GCNV.
+
+
+
+
+== Étape 3 : Créez des volumes iSCSI GCNV
+
+Créez cinq volumes iSCSI GCNV pour chaque hôte de base de données : un pour  `/u01` et quatre pour les périphériques de support ASM. Les volumes de chaque hôte doivent être créés dans le pool de stockage de la zone locale correspondante, avec le groupe d'hôtes associé.
+
+. Créez les cinq volumes pour  `oracdb1` dans  `oracle-pool-a` avec le groupe d'hôtes  `oracdb1-hg`. Utilisez les spécifications du tableau ci-dessous :
++
+[cols="2,1,3,2"]
+|===
+| Volume iSCSI GCNV | Taille | Utiliser | Alias multipath 
+
+
+| `ora_<host>_u01` | 100 Gio | `/u01`Volume iSCSI GCNV — Répertoires Grid/Oracle, zone de transit | `/dev/mapper/ora_<host>_u01` 
+
+
+| `ora_<host>_data_01` | 50 Gio | ASM `+DATA` | `/dev/mapper/ora_<host>_data_01` 
+
+
+| `ora_<host>_data_02` | 50 Gio | ASM `+DATA` (rayé) | `/dev/mapper/ora_<host>_data_02` 
+
+
+| `ora_<host>_arch_01` | 100 Gio | ASM `+RECO` | `/dev/mapper/ora_<host>_arch_01` 
+
+
+| `ora_<host>_fra_01` | 100 Gio | ASM `+FRA` | `/dev/mapper/ora_<host>_fra_01` 
+|===
++
+Noms de volumes : lettres, chiffres, traits de soulignement uniquement (pas de traits d'union).
+
++
+[NOTE]
+====
+*Configuration minimale (validation uniquement) :* Deux LUN par hôte (`*_data`, `*_reco` avec  `arch_01p1`→`+RECO` et  `arch_01p2`→`+FRA` est acceptable pour le laboratoire ; la production utilise cinq volumes par <<create-gcnv-iscsi-volumes,Étape 3 : Créer les volumes iSCSI GCNV>>.
+
+====
+. Créez les cinq volumes pour  `oracdb2` dans  `oracle-pool-b` avec le groupe d'hôtes  `oracdb2-hg` en utilisant les mêmes spécifications. Pour chaque pool, utilisez *NetApp Volumes → Volumes → Create* — iSCSI, pool et groupe d'hôtes appropriés, Linux. Notez les informations suivantes :
++
+** Adresses IP des portails iSCSI → `<ISCSI_PORTAL_1>`, `<ISCSI_PORTAL_2>` (portails du pool principal sur `oracdb1`; portails du pool de secours sur `oracdb2` — ils peuvent différer)
+** Numéro de série du volume depuis la console cloud — à utiliser avec le WWID découvert par l’hôte dans <<configure-iscsi-and-multipath,Étape 4 : Configurer iSCSI Linux et le multipath pour les volumes iSCSI GCNV>>
+
+
+
+
+
+
+== Étape 4 : Configurer iSCSI et le multipath
+
+Configurez iSCSI et device-mapper-multipath sur chaque hôte de base de données pour accéder aux volumes GCNV via les deux adresses IP du portail de stockage. Exécutez ces étapes sur `oracdb1` en utilisant les adresses IP du portail du pool principal, puis répétez-les sur `oracdb2` en utilisant celles du portail du pool de secours. Si la sortie de l’hôte est restreinte, autorisez TCP/3260 de chaque machine virtuelle de base de données vers ses adresses IP de portail iSCSI GCNV (en plus de TCP/1521 entre machines virtuelles xref:gcnv-oracle-provision-compute.adoc#vpc-firewall-allow-1521[Étape 2 : Pare-feu VPC — autoriser la liste blanche TCP/1521 sur les trois zones]).
+
+. Découvrez les cibles, connectez-vous et persistez le démarrage du nœud :
++
+[source, bash]
+----
+sudo iscsiadm --mode discovery --op update --type sendtargets --portal <ISCSI_PORTAL_1>
+sudo iscsiadm --mode discovery --op update --type sendtargets --portal <ISCSI_PORTAL_2>
+sudo iscsiadm --mode node --op update --name node.startup --value automatic
+sudo iscsiadm --mode node -l all
+sudo systemctl enable --now iscsid iscsi multipathd
+sudo iscsiadm --mode session         # expect 10 sessions (5 GCNV iSCSI volumes × 2 portals)
+sudo lsblk -o NAME,SIZE,WWN,VENDOR,MODEL
+----
++
+Après le redémarrage, vérifiez à nouveau avant de démarrer Oracle :
+
++
+[source, bash]
+----
+sudo iscsiadm --mode session
+sudo multipath -ll
+----
+. Configurer  `device-mapper-multipath` avec des valeurs par défaut et des règles de liste noire :
++
+[source, bash]
+----
+sudo tee /etc/multipath.conf >/dev/null <<'EOF'
+defaults {
+    find_multipaths     yes
+    user_friendly_names yes
+}
+blacklist {
+    devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+    devnode "^hd[a-z]"
+    devnode "^cciss.*"
+}
+EOF
+
+sudo systemctl enable --now multipathd
+sudo multipath -ll
+----
+. Ajoutez les alias WWID détectés par l'hôte  `/etc/multipath.conf` (ne devinez pas —  `multipath.conf` ne développe *pas* les variables du shell). Découvrez les WWID :
++
+[source, bash]
+----
+sudo multipath -ll
+for dev in /dev/sd*; do
+  [ -b "$dev" ] || continue
+  printf '%s: ' "$dev"
+  sudo /usr/lib/udev/scsi_id --whitelisted --device="$dev" 2>/dev/null || true
+  echo
+done
+----
++
+Ajoutez des alias concrets pour cet hôte à `/etc/multipath.conf`, puis `sudo systemctl restart multipathd`.
+
++
+Sur `oracdb1`, ajoutez :
+
++
+[source]
+----
+multipaths {
+    multipath { wwid <host-discovered-wwid-for-u01>      alias ora_oracdb1_u01     }
+    multipath { wwid <host-discovered-wwid-for-data-01>  alias ora_oracdb1_data_01 }
+    multipath { wwid <host-discovered-wwid-for-data-02>  alias ora_oracdb1_data_02 }
+    multipath { wwid <host-discovered-wwid-for-arch-01>  alias ora_oracdb1_arch_01 }
+    multipath { wwid <host-discovered-wwid-for-fra-01>   alias ora_oracdb1_fra_01  }
+}
+----
++
+Sur `oracdb2`, utilisez le même modèle avec `ora_oracdb2_*` des alias, puis :
+
++
+[source, bash]
+----
+sudo systemctl restart multipathd
+ls -l /dev/mapper/ora_$(hostname -s)_*
+----
+
+
+
+
+== Étape 5 : Partitionner les périphériques ASM
+
+Partitionnez les quatre périphériques de stockage ASM (à l’exclusion `u01`) avec une partition GPT chacun pour la consommation par ASM, puis configurez les règles udev pour l’appartenance au groupe grid. Exécutez ces étapes sur chaque hôte de base de données.
+
+. Partitionnez les quatre périphériques de stockage ASM avec GPT et vérifiez les partitions :
++
+[source, bash]
+----
+HOST=$(hostname -s)        # oracdb1 on the primary, oracdb2 on the standby
+for dev in /dev/mapper/ora_${HOST}_data_01 \
+           /dev/mapper/ora_${HOST}_data_02 \
+           /dev/mapper/ora_${HOST}_arch_01 \
+           /dev/mapper/ora_${HOST}_fra_01; do
+  sudo parted -s "$dev" mklabel gpt
+  sudo parted -s "$dev" mkpart primary 0% 100%
+done
+sudo partprobe
+sudo systemctl reload multipathd
+ls /dev/mapper/ora_${HOST}_*p1     # expect 4 partitions
+----
+. Configurez les règles udev pour attribuer la propriété grid et déclencher les modifications :
++
+[source, bash]
+----
+HOST=$(hostname -s)
+sudo tee /etc/udev/rules.d/99-oracle-asm.rules >/dev/null <<'EOF'
+KERNEL=="dm-*", ENV{DM_UUID}=="part?-mpath-*", ENV{DM_NAME}=="ora_oracdb*_*p?", \
+    OWNER="grid", GROUP="asmadmin", MODE="0660"
+EOF
+
+sudo udevadm control --reload-rules
+for part in /dev/mapper/ora_${HOST}_*p1; do
+  dm=$(readlink -f "$part" | xargs basename)
+  sudo udevadm trigger --action=change --name-match="/dev/${dm}"
+done
+sudo udevadm settle
+ls -lL /dev/mapper/ora_${HOST}_*p1    # grid:asmadmin 0660
+----
+
+
+
+
+== Étape 6 : Formatez et montez `/u01`
+
+Formatez le  `ora_<host>_u01`volume GCNV avec XFS et montez-le de manière permanente en utilisant l’UUID dans `/etc/fstab`. Le `/u01` système de fichiers contient Grid home, Oracle home et les fichiers de staging.
+
+. Formatez le périphérique multipath avec XFS et capturez son UUID :
++
+[source, bash]
+----
+HOST=$(hostname -s)
+U01_DEV=/dev/mapper/ora_${HOST}_u01
+ls -l "$U01_DEV"
+
+sudo mkfs.xfs -f "$U01_DEV"
+U01_UUID=$(sudo blkid -s UUID -o value "$U01_DEV")
+----
+. Ajoutez l'entrée de montage basée sur l'UUID à `/etc/fstab` et montez le système de fichiers :
++
+[source, bash]
+----
+sudo mkdir -p /u01
+echo "UUID=${U01_UUID} /u01 xfs defaults,_netdev,nofail,x-systemd.requires=iscsi.service,x-systemd.requires=multipathd.service,x-systemd.after=iscsi.service,x-systemd.after=multipathd.service 0 0" | sudo tee -a /etc/fstab
+sudo mount -a
+----
+. Créez la structure de répertoires avec la propriété appropriée pour les logiciels Grid et Oracle :
++
+[source, bash]
+----
+sudo mkdir -p /u01/app/oraInventory /u01/app/26ai/grid /u01/app/grid \
+  /u01/app/oracle/product/26ai/db_1 /u01/stage
+sudo chown -R grid:oinstall /u01/app/oraInventory /u01/app/26ai /u01/app/grid
+sudo chown -R oracle:oinstall /u01/app/oracle /u01/stage
+sudo chmod -R 775 /u01/app /u01/stage
+----
++
+Redémarrez une fois et confirmez  `/u01` les montages avant xref:gcnv-oracle-install-software.adoc[installation du logiciel Oracle].
+
+
+
+
+
+== Et ensuite ?
+
+Pour installer les binaires Oracle Grid Infrastructure et Database sur les hôtes préparés, allez à xref:gcnv-oracle-install-software.adoc[Installez le logiciel Oracle Grid Infrastructure et Oracle Database] sur les deux hôtes.

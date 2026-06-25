@@ -1,0 +1,149 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-deployment-options.html 
+keywords: oracle database, google cloud netapp volumes, gcnv, deployment options, high availability, disaster recovery, data guard, fsfo 
+summary: Options de déploiement pour Google Cloud NetApp Volumes avec Oracle Database 26ai, des environnements de développement/test aux niveaux de haute disponibilité en production. 
+---
+= Découvrez les options de déploiement de Google Cloud NetApp Volumes pour Oracle Database 26ai
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Google Cloud NetApp Volumes prend en charge Oracle Database 26ai sur plusieurs niveaux de déploiement, des environnements de développement/test aux configurations de production à haute disponibilité avec Data Guard et Fast-Start Failover. Examinez les exigences de déploiement, comparez les niveaux de haute disponibilité et identifiez la séquence de tâches pour l’architecture choisie sur Google Cloud NetApp Volumes.
+
+
+
+== Exigences de déploiement
+
+Assurez-vous de disposer des éléments suivants avant de provisionner Google Cloud NetApp Volumes pour la haute disponibilité d'Oracle Database 26ai :
+
+* Un projet Google Cloud disposant des autorisations nécessaires pour Compute Engine, la mise en réseau VPC, la configuration du pare-feu, IAM et NetApp Volumes
++
+[cols="1,2"]
+|===
+| Tâche | Accès requis 
+
+
+| Créer des machines virtuelles Compute Engine | Administrateur d'instance de calcul (ou équivalent) 
+
+
+| Pare-feu / Politiques de pare-feu | Administrateur réseau ou administrateur de stratégie délégué 
+
+
+| Créer des pools et des volumes GCNV | Administrateur NetApp Volumes 
+
+
+| Configurer PSA | Administrateur réseau dans le projet hôte 
+
+
+| SSH via IAP | Utilisateur du tunnel sécurisé IAP + connexion au système d'exploitation (le cas échéant) 
+|===
+* L’API NetApp Volumes activée
+* Un VPC et un sous-réseau configurés pour la région cible
+* Accès aux services privés (PSA) configuré pour Google Cloud NetApp Volumes
+* Oracle Linux 10 pour toutes les machines virtuelles requises
+* La résolution DNS et de noms d'hôtes est configurée pour les hôtes de base de données et l'hôte Observer
+* Supports d'installation et fichiers de correctifs Oracle disponibles pour Oracle Database 26ai et Grid Infrastructure
+* Connaissance des concepts Oracle Data Guard, Oracle Restart et stockage iSCSI
+* La synchronisation de l'heure est configurée pour toutes les machines virtuelles.
++
+Vous pouvez utiliser les commandes suivantes :
+
++
+[source, bash]
+----
+gcloud services enable netapp.googleapis.com
+chronyc tracking
+timedatectl
+----
+
+
+
+
+== Exemple de configuration de déploiement
+
+Cette solution utilise la configuration de déploiement suivante :
+
+* Trois machines virtuelles Google Compute Engine :
++
+** `oracdb1` pour la base de données principale
+** `oracdb2` pour la base de données de secours
+** `oradg-obs` pour l'observateur de basculement à démarrage rapide
+
+
+* Un pool de stockage GCNV Flex Unified par zone de base de données
+* Cinq volumes iSCSI GCNV par hôte de base de données
+* Oracle Data Guard Broker et Fast-Start Failover pour le basculement automatique
+* Stockage dédié par hôte de base de données ; les hôtes principal et de secours ne partagent pas les volumes iSCSI
+
+
+Remplacez toutes les valeurs d'exemple dans les commandes par des valeurs provenant de votre environnement, y compris les noms d'hôtes, les adresses IP, les zones, les noms de projets, les adresses IP du portail, les mots de passe et les noms de fichiers multimédias Oracle.
+
+
+
+== Options de déploiement
+
+Le tableau suivant compare les modèles de déploiement HA et DR et met en évidence les domaines où l'automatisation offre le plus d'avantages opérationnels.
+
+[cols="1,1,1,1,1,1,1"]
+|===
+| Environnement | Exigence | Architecture recommandée | HA | DR | Automation | Avantage clé 
+
+
+| Développement/Test | coût le plus bas | instance unique | Non | Oui | Non | clone instantané 
+
+
+| Prod Basic (Redémarrage) | Réduisez l'interruption due aux pannes | + Oracle Restart | Non | Oui | Local uniquement | Redémarrage automatique 
+
+
+| Prod HA (sans DG) | DR manuel acceptable | + Instantanés / RMAN | Partiel | Oui | Partiel | Récupération de clones GCNV 
+
+
+| Prod HA (DG + FSFO) | Véritable haute disponibilité (sans DBA) | Data Guard + FSFO | Oui | Oui | Complet | Haute disponibilité réelle + basculement rapide 
+|===
+.HA/DR/Automatisation
+* Oui = atteint l'objectif de niveau
+* Non = hors du périmètre
+* Partiel = uniquement des étapes au niveau du stockage ou manuelles
+
+
+
+
+== Tâches de déploiement par niveau de haute disponibilité
+
+Le xref:gcnv-oracle-deployment.html[workflow de déploiement] fournit une séquence d'étapes numérotées pour tous les niveaux de déploiement. Tous les niveaux effectuent les tâches de déploiement de base indiquées ci-dessous, puis ajoutent des tâches spécifiques à chaque niveau pour la haute disponibilité en production :
+
+*Déploiement de base (tous niveaux) :*
+
+. xref:gcnv-oracle-solution-architecture.html[Examiner l'architecture de la solution]
+. Consultez les options et les exigences de déploiement (cette page)
+. xref:gcnv-oracle-access-and-apis.html[Vérifiez l'accès et les API]
+. xref:gcnv-oracle-provision-compute.html[Provisionner des instances Google Compute Engine]
+. xref:gcnv-oracle-provision-storage.html[Provisionner le stockage iSCSI GCNV]
+. xref:gcnv-oracle-install-software.html[Installez Oracle Grid Infrastructure et Oracle Database 26ai]
+. xref:gcnv-oracle-primary-database.html[Créer la base de données principale]
+. xref:gcnv-oracle-standby-database.html[Créer la base de données de secours]
+
+
+*Tâches spécifiques au niveau (Prod HA uniquement) :*
+
+[cols="1,2"]
+|===
+| Niveau | Étapes de déploiement 
+
+
+| Niveaux Dev/Test et Prod Basic (Redémarrage) | Effectuez uniquement les étapes 1 à 7 du déploiement complet de la base. Aucune base de données de secours n'est requise. 
+
+
+| Haute disponibilité de production (sans Data Guard) | Effectuez le déploiement complet de la base de l’étape 1 à l’étape 8. 
+
+
+| Haute disponibilité de production (Data Guard + FSFO) | Terminez toutes les étapes de déploiement de base, puis ajoutez : + Étape 9 : xref:gcnv-oracle-standby-finalize-dg.html[Finaliser la base de données de secours pour Data Guard] + Étape 10 : xref:gcnv-oracle-data-guard.html[Configurer Data Guard Broker et Fast-Start Failover] 
+|===
+
+
+== Et ensuite ?
+
+Pour préparer votre environnement avant le déploiement, poursuivez avec xref:gcnv-oracle-access-and-apis.html[Accès et API pour Oracle Database 26ai sur Google Cloud NetApp Volumes].

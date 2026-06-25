@@ -1,0 +1,97 @@
+---
+sidebar: sidebar 
+permalink: oracle/gcnv-oracle-primary-database.html 
+keywords: oracle database, dbca, asm, cdb, pdb, oracle restart, srvctl, oracle 26ai, primary database 
+summary: 'Créez la base de données Oracle principale sur le stockage iSCSI Google Cloud NetApp Volumes à l"aide de l"Assistant de configuration de base de données Oracle en mode silencieux. Cette procédure couvre l"exécution de dbca pour créer la base de données conteneur et la base de données enfichable sur les groupes de disques ASM pris en charge par GCNV, la configuration des destinations des journaux d"archive et l"ajout d"un service applicatif basé sur les rôles pour un basculement transparent.' 
+---
+= Créez la base de données principale Oracle sur Google Cloud NetApp Volumes
+:allow-uri-read: 
+:icons: font
+:imagesdir: ../media/
+
+
+[role="lead"]
+Créez la base de données Oracle principale sur le stockage iSCSI Google Cloud NetApp Volumes à l'aide de l'Assistant de configuration de base de données Oracle en mode silencieux. Cette procédure couvre l'exécution de  `dbca` pour créer la base de données conteneur et la base de données enfichable sur des groupes de disques ASM pris en charge par GCNV, la configuration des destinations des journaux d'archive, et l'ajout d'un service applicatif basé sur les rôles pour un basculement transparent après l'activation de Data Guard.
+
+.Étapes
+Créez la base de données conteneur Oracle et la base de données pluggable sur `oracdb1` en utilisant `dbca` en mode silencieux, configurez les destinations des journaux d’archivage, vérifiez l’enregistrement Oracle Restart et ajoutez un service applicatif basé sur les rôles pour un basculement transparent du client.
+
+. Exécutez  `dbca` en mode silencieux pour créer la CDB et la PDB sur les groupes de disques ASM :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$PATH
+
+dbca -silent -createDatabase \
+  -templateName General_Purpose.dbc \
+  -gdbname orcl -sid orcl \
+  -characterSet AL32UTF8 -nationalCharacterSet AL16UTF16 \
+  -sysPassword "ChangeMe!1" -systemPassword "ChangeMe!1" \
+  -emConfiguration NONE \
+  -datafileDestination +DATA -storageType ASM \
+  -recoveryAreaDestination +FRA -recoveryAreaSize 25000 \
+  -enableArchive true -archiveLogMode AUTO \
+  -memoryMgmtType AUTO_SGA -totalMemory 4096 \
+  -databaseType MULTIPURPOSE \
+  -createAsContainerDatabase true -numberOfPDBs 1 \
+  -pdbName orclpdb -pdbAdminPassword "ChangeMe!1" \
+  -ignorePreReqs
+'
+----
+. Pointez les journaux d'archivage vers  `+RECO` et ouvrez puis enregistrez l'état de la base de données enfichable. La base de données de secours utilise des paramètres de journaux d'archivage correspondants dans xref:gcnv-oracle-standby-database.adoc#standby-init-ora-and-nomount[Étape 2 : Standby init.ora, pfile et NOMOUNT] :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export ORACLE_SID=orcl
+$ORACLE_HOME/bin/sqlplus -s / as sysdba <<SQL
+ALTER SYSTEM SET log_archive_dest_1='\''LOCATION=+RECO VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=orcl'\'' SCOPE=BOTH;
+ALTER PLUGGABLE DATABASE ALL OPEN;
+ALTER PLUGGABLE DATABASE ALL SAVE STATE;
+EXIT
+SQL
+'
+----
+. Vérifiez que la base de données s'exécute sous Oracle Restart :
++
+[source, bash]
+----
+sudo /u01/app/26ai/grid/bin/srvctl status database -d orcl
+# Expected: Database is running
+
+sudo -u oracle sqlplus -s / as sysdba <<<"SELECT name, open_mode, log_mode FROM v\$database;"
+# Expected: ORCL, READ WRITE, ARCHIVELOG
+----
+. Créez un service applicatif afin que les applications se connectent via  `orclapp` et que le basculement soit transparent lorsque Data Guard est activé :
++
+[source, bash]
+----
+sudo -u oracle bash -c '
+export GRID_HOME=/u01/app/26ai/grid
+export ORACLE_HOME=/u01/app/oracle/product/26ai/db_1
+export PATH=$ORACLE_HOME/bin:$GRID_HOME/bin:$PATH
+
+srvctl add service \
+  -db orcl \
+  -service orclapp \
+  -pdb orclpdb \
+  -role PRIMARY \
+  -policy AUTOMATIC
+
+srvctl start service -db orcl -service orclapp
+srvctl status service -db orcl -service orclapp
+'
+----
++
+Après l’activation de Data Guard Broker,  `orclapp` s’exécute uniquement sur le PRIMARY. Multiplexez les fichiers de contrôle sur les groupes de disques ASM et dimensionnez la mémoire en fonction de la charge de travail.
+
+
+
+
+
+== Et ensuite ?
+
+Pour établir une protection de secours et une préparation au basculement, allez à xref:gcnv-oracle-standby-database.adoc[Créer la base de données Oracle de secours] sur  `oracdb2`.
