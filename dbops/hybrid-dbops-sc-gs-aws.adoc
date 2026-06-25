@@ -18,6 +18,7 @@ Cette section décrit le processus de déploiement de Cloud Manager et de Cloud 
 
 
 
+[[aws-public-cloud]]
 == Cloud public AWS
 
 
@@ -25,6 +26,7 @@ NOTE: Pour faciliter le suivi, nous avons créé ce document basé sur un déplo
 
 
 
+[[1-pre-flight-check]]
 === 1. Contrôle pré-vol
 
 Avant le déploiement, assurez-vous que l’infrastructure est en place pour permettre le déploiement à l’étape suivante.  Cela comprend les éléments suivants :
@@ -38,6 +40,7 @@ Avant le déploiement, assurez-vous que l’infrastructure est en place pour per
 
 
 
+[[2-steps-to-deploy-cloud-manager-and-cloud-volumes-ontap-in-aws]]
 === 2. Étapes pour déployer Cloud Manager et Cloud Volumes ONTAP dans AWS
 
 
@@ -292,6 +295,7 @@ image:cloud-central-replication-013.png["Figure montrant une boîte de dialogue 
 
 
 
+[[3-deploy-ec2-compute-instance-for-database-workload]]
 === 3. Déployer une instance de calcul EC2 pour la charge de travail de la base de données
 
 AWS a préconfiguré des instances de calcul EC2 pour diverses charges de travail.  Le choix du type d'instance détermine le nombre de cœurs de processeur, la capacité de mémoire, le type et la capacité de stockage, ainsi que les performances du réseau.  Pour les cas d'utilisation, à l'exception de la partition du système d'exploitation, le stockage principal pour exécuter la charge de travail de la base de données est alloué à partir de CVO ou du moteur de stockage FSx ONTAP .  Par conséquent, les principaux facteurs à prendre en compte sont le choix des cœurs de processeur, de la mémoire et du niveau de performance du réseau.  Les types d'instances AWS EC2 typiques peuvent être trouvés ici : https://us-east-2.console.aws.amazon.com/ec2/v2/home?region=us-east-2#InstanceTypes:["Type d'instance EC2"] .

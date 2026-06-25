@@ -20,6 +20,7 @@ Cette solution fournit une vue d'ensemble et des détails pour le déploiement a
 
 
 
+[[purpose]]
 == But
 
 NetApp AFF C-Series est un stockage flash de grande capacité qui rend le tout flash plus accessible et plus abordable pour le stockage unifié.  Ses performances sont suffisantes pour de nombreuses charges de travail de base de données Oracle de niveau 1 ou de niveau 2.  Alimentés par le logiciel de gestion de données NetApp ONTAP , les systèmes AFF C-Series offrent une efficacité de pointe, une flexibilité supérieure, des services de données de premier ordre et une intégration cloud pour vous aider à faire évoluer votre infrastructure informatique, à simplifier la gestion de vos données et à réduire les coûts de stockage et la consommation d'énergie.
@@ -34,6 +35,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -46,18 +48,21 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[solution-test-and-validation-environment]]
 == Environnement de test et de validation de solutions
 
 Les tests et la validation de cette solution ont été réalisés dans un environnement de laboratoire qui pourrait ne pas correspondre à l’environnement de déploiement final.  Voir la section<<Facteurs clés à prendre en compte lors du déploiement>> pour plus d'informations.
 
 
 
+[[architecture]]
 === Architecture
 
 image:automation-ora-c-series-nfs-architecture.png["Cette image fournit une image détaillée de la configuration de déploiement Oracle dans le cloud public AWS avec iSCSI et ASM."]
 
 
 
+[[hardware-and-software-components]]
 === Composants matériels et logiciels
 
 [cols="33%, 33%, 33%"]
@@ -104,6 +109,7 @@ image:automation-ora-c-series-nfs-architecture.png["Cette image fournit une imag
 |===
 
 
+[[oracle-database-configuration-in-the-lab-environment]]
 === Configuration de la base de données Oracle dans l'environnement de laboratoire
 
 [cols="33%, 33%, 33%"]
@@ -123,6 +129,7 @@ image:automation-ora-c-series-nfs-architecture.png["Cette image fournit une imag
 |===
 
 
+[[key-factors-for-deployment-consideration]]
 === Facteurs clés à prendre en compte lors du déploiement
 
 * *Disposition de stockage de la base de données Oracle.*  Dans ce déploiement Oracle automatisé, nous provisionnons trois volumes de base de données pour chaque base de données afin d'héberger les binaires, les données et les journaux Oracle par défaut.  Les volumes sont montés sur le serveur Oracle DB en tant que /u01 - binaire, /u02 - données, /u03 - journaux via NFS.  Les fichiers de contrôle double sont configurés sur les points de montage /u02 et /u03 pour la redondance.
@@ -134,12 +141,14 @@ image:automation-ora-c-series-nfs-architecture.png["Cette image fournit une imag
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 Les sections suivantes fournissent des procédures étape par étape pour le déploiement automatisé d'Oracle 19c et des informations sur la protection et le clonage de la base de données Oracle après le déploiement.
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -174,6 +183,7 @@ installer_archives:
 ====
 
 
+[[configure-networking-and-svm-on-c-series-for-oracle]]
 === Configurer la mise en réseau et SVM sur C-Series pour Oracle
 
 [%collapsible%open]
@@ -274,6 +284,7 @@ Ceci termine la configuration du contrôleur de la série C pour Oracle.
 ====
 
 
+[[automation-parameter-files]]
 === Fichiers de paramètres d'automatisation
 
 [%collapsible%open]
@@ -290,6 +301,7 @@ En plus de ces fichiers de variables définis par l'utilisateur, il existe plusi
 ====
 
 
+[[parameter-files-configuration]]
 === Configuration des fichiers de paramètres
 
 [%collapsible%open]
@@ -368,6 +380,7 @@ nfs_lif: 172.30.136.68
 ====
 
 
+[[playbook-execution]]
 === Exécution du manuel de jeu
 
 [%collapsible%open]
@@ -432,6 +445,7 @@ ansible-playbook -i hosts 5-destroy.yml -u admin -e @vars/vars.yml
 ====
 
 
+[[post-execution-validation]]
 === Validation post-exécution
 
 [%collapsible%open]
@@ -664,6 +678,7 @@ image:automation-ora-c-series-nfs-em-001.png["Cette image fournit l'écran de co
 ====
 
 
+[[oracle-backup-restore-and-clone-with-snapcenter]]
 === Sauvegarde, restauration et clonage Oracle avec SnapCenter
 
 [%collapsible%open]
@@ -673,6 +688,7 @@ NetApp recommande l'outil d'interface utilisateur SnapCenter pour gérer la base
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

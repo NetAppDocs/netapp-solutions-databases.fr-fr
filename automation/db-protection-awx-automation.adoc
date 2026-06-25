@@ -18,10 +18,12 @@ Cette page décrit la protection automatisée des données d'Oracle19c sur le st
 
 
 
+[[awxtower-oracle-data-protection]]
 == Protection des données Oracle AWX/Tower
 
 
 
+[[create-the-inventory-group-hosts-and-credentials-for-your-environment]]
 === Créez l'inventaire, le groupe, les hôtes et les informations d'identification pour votre environnement
 
 Cette section décrit la configuration de l'inventaire, des groupes, des hôtes et des informations d'identification d'accès dans AWX/Ansible Tower qui préparent l'environnement pour la consommation de solutions automatisées NetApp .
@@ -217,6 +219,7 @@ extra_vars:
 ====
 
 
+[[create-a-project]]
 === Créer un projet
 
 . Accédez à Ressources → Projets et cliquez sur Ajouter.
@@ -232,6 +235,7 @@ extra_vars:
 
 
 
+[[configure-global-variables]]
 === Configurer les variables globales
 
 Les variables définies dans cette section s'appliquent à tous les hôtes Oracle, bases de données et au cluster ONTAP .
@@ -556,6 +560,7 @@ control_files:
 ====
 
 
+[[automation-playbooks]]
 === Manuels d'automatisation
 
 Il y a quatre manuels de jeu distincts qui doivent être exécutés.
@@ -687,6 +692,7 @@ NOTE: Ce playbook ne sera pas exécuté tant que vous ne serez pas prêt à rest
 ====
 
 
+[[recovering-oracle-database]]
 === Récupération de la base de données Oracle
 
 . Les volumes de données des bases de données Oracle de production sur site sont protégés via la réplication NetApp SnapMirror vers un cluster ONTAP redondant dans un centre de données secondaire ou vers Cloud Volume ONTAP dans un cloud public.  Dans un environnement de reprise après sinistre entièrement configuré, les instances de calcul de récupération dans un centre de données secondaire ou un cloud public sont en veille et prêtes à récupérer la base de données de production en cas de sinistre.  Les instances de calcul de secours sont maintenues synchronisées avec les instances sur site en exécutant des mises à jour parallèles sur le correctif ou la mise à niveau du noyau du système d'exploitation en mode verrouillé.

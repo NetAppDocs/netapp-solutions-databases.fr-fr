@@ -20,6 +20,7 @@ La solution fournit une boîte à outils d'automatisation basée sur Ansible pou
 
 
 
+[[purpose]]
 == But
 
 L'exploitation des clones rapides de la base de données Oracle de secours physique dans la configuration Oracle Data Guard pour d'autres cas d'utilisation sert à plusieurs fins.  Il fournit une base de données de rapports en temps quasi réel ainsi qu'une copie inscriptible de la base de données de production à des fins de développement ou d'UAT.  Ainsi, il peut éliminer les coûts coûteux de licence Active Data Guard si un court délai (10 à 15 minutes) de reporting est acceptable.  Cela permet de réduire les coûts de stockage, en particulier lorsque le clonage fin des volumes de données primaires est une option.  Cette boîte à outils d'automatisation basée sur Ansible permet aux utilisateurs de configurer, cloner et actualiser les bases de données Oracle clonées selon les calendriers des utilisateurs pour une gestion simplifiée du cycle de vie.  La boîte à outils s'applique aux bases de données Oracle déployées sur le cloud public Google à l'aide du stockage Google Cloud NetApp Volumes (GCNV) et de la configuration de la base de données Oracle dans une configuration Data Guard.
@@ -32,6 +33,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -43,6 +45,7 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[license]]
 == Licence
 
 En accédant, en téléchargeant, en installant ou en utilisant le contenu de ce référentiel GitHub, vous acceptez les termes de la licence énoncés danslink:https://github.com/NetApp/na_ora_hadr_failover_resync/blob/master/LICENSE.TXT["Fichier de licence"^] .
@@ -52,10 +55,12 @@ NOTE: Il existe certaines restrictions concernant la production et/ou le partage
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -83,6 +88,7 @@ NOTE: Pour simplifier, le serveur Oracle cible cloné doit être configuré de m
 ====
 
 
+[[download-the-toolkit]]
 === Téléchargez la boîte à outils
 
 [%collapsible%open]
@@ -97,6 +103,7 @@ NOTE: La boîte à outils n'est accessible qu'aux utilisateurs internes de NetAp
 ====
 
 
+[[ansible-source-and-target-hosts-file-configuration]]
 === Configuration des fichiers hôtes source et cible d'Ansible
 
 [%collapsible%open]
@@ -118,6 +125,7 @@ localhost ansible_connection=local
 ====
 
 
+[[global-variables-configuration]]
 === Configuration des variables globales
 
 [%collapsible%open]
@@ -203,6 +211,7 @@ NOTE: Pour un déploiement d'automatisation plus sécurisé, Ansible Vault peut 
 ====
 
 
+[[host-variables-configuration]]
 === Configuration des variables de l'hôte
 
 [%collapsible%open]
@@ -226,6 +235,7 @@ asm_sid: +ASM
 ====
 
 
+[[additional-clone-target-oracle-server-configuration]]
 === Configuration supplémentaire du serveur Oracle cible de clonage
 
 [%collapsible%open]
@@ -252,6 +262,7 @@ NOTE: Assurez-vous que le paramètre de configuration asm_diskstring sur l'hôte
 ====
 
 
+[[playbook-execution]]
 === Exécution du manuel de jeu
 
 [%collapsible%open]
@@ -285,6 +296,7 @@ NOTE: L'exécution de la boîte à outils à différentes étapes s'interrompt p
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur l'automatisation des solutions NetApp , consultez le site Web suivantlink:https://docs.netapp.com/us-en/netapp-solutions-dataops/automation/automation-introduction.html["Automatisation des solutions NetApp ^"^]

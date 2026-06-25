@@ -15,6 +15,7 @@ Configurez des groupes de disponibilité Always On pour SQL Server sur des insta
 
 
 
+[[prerequisites]]
 == Prérequis
 
 Avant de poursuivre, complétez les étapes préalables de configuration dans la documentation Google Cloud :
@@ -27,6 +28,7 @@ Avant de poursuivre, complétez les étapes préalables de configuration dans la
 
 
 
+[[before-you-begin]]
 == Avant de commencer
 
 Assurez-vous d'avoir rempli les exigences suivantes :
@@ -43,6 +45,7 @@ NOTE: Les nouveaux utilisateurs de Google Cloud pourraient être éligibles à l
 
 
 
+[[objectives]]
 == Objectifs
 
 La configuration du groupe de disponibilité SQL Server Always On comprend les tâches de haut niveau suivantes :
@@ -57,6 +60,7 @@ La configuration du groupe de disponibilité SQL Server Always On comprend les t
 
 
 
+[[cost-considerations]]
 == Considérations relatives aux coûts
 
 Ce tutoriel utilise des composants payants de Google Cloud, notamment link:https://console.cloud.google.com/compute/overview?["instances de Compute Engine"^] et link:https://console.cloud.google.com/netapp/volumes?["Google Cloud NetApp Volumes"^] stockage.
@@ -65,6 +69,7 @@ Utilisez link:https://cloud.google.com/products/calculator?dl=CjhDaVF4T1dJeU5XRT
 
 
 
+[[configure-domain-accounts]]
 == Configurer les comptes de domaine
 
 Configurez deux comptes dans Active Directory : un compte d’installation (votre compte admin) et un compte de service pour les deux SQL Server VMs.
@@ -86,6 +91,7 @@ NOTE: Cet exemple utilise `cvsdemo` comme nom de domaine. Remplacez `cvsdemo` pa
 |===
 
 
+[[create-compute-engine-vms-for-sql-server]]
 == Créer des machines virtuelles Compute Engine pour SQL Server
 
 Créez deux instances de machine virtuelle Google Compute Engine avec SQL Server 2022 Enterprise préinstallé sur Windows Server 2025 pour héberger les réplicas du groupe de disponibilité.
@@ -125,6 +131,7 @@ Veuillez vous référer au link:https://cloud.google.com/compute/docs/instances/
 
 
 
+[[join-servers-to-the-domain]]
 === Joindre les serveurs au domaine
 
 Après avoir créé les machines virtuelles, joignez-les au domaine Active Directory et installez les fonctionnalités Windows requises pour le clustering de basculement et la connectivité iSCSI.
@@ -147,6 +154,7 @@ NOTE: Votre instance SQL s'exécutera en utilisant le compte sqlsvc, qui est req
 
 
 
+[[install-required-windows-features]]
 === Installer les fonctionnalités Windows requises
 
 Installez le clustering de basculement et MPIO sur les deux machines virtuelles SQL Server à l'aide du Gestionnaire de serveur ou de PowerShell.
@@ -178,6 +186,7 @@ Install-WindowsFeature RSAT-AD-PowerShell
 ----
 
 
+[[obtain-iscsi-initiator-names]]
 === Obtenir les noms des initiateurs iSCSI
 
 Obtenez le nom qualifié iSCSI (IQN) pour chaque machine virtuelle SQL Server à inclure dans le groupe d'hôtes en utilisant soit l'interface graphique de l'initiateur iSCSI, soit PowerShell.
@@ -200,12 +209,14 @@ Get-InitiatorPort | Select-Object NodeAddress
 ----
 
 
+[[create-netapp-block-storage-volumes]]
 == Créer des volumes de stockage bloc NetApp
 
 Créez des volumes de stockage bloc iSCSI à l'aide de Google Cloud NetApp Volumes pour fournir un stockage partagé haute performance aux bases de données SQL Server. Ce processus comprend la création d'un groupe d'hôtes, d'un pool de stockage et de volumes individuels pour les données, les journaux, les volumes temporaires et les sauvegardes.
 
 
 
+[[create-the-host-group]]
 === Créer le groupe hôte
 
 .Étapes
@@ -242,6 +253,7 @@ image::gcnv-sql-storage-pool.png[Configuration du pool de stockage]
 
 
 
+[[create-storage-pool]]
 === Créer un pool de stockage
 
 .Étapes
@@ -279,6 +291,7 @@ Pour plus de détails, consultez la documentation link:https://cloud.google.com/
 
 
 
+[[create-volumes]]
 === Créer des volumes
 
 . Créez des volumes pour les données, les journaux, les fichiers temporaires et les sauvegardes. Exécutez la commande suivante pour chaque type de volume :
@@ -317,6 +330,7 @@ NOTE: Répétez cette étape pour chaque type de volume : data, log, temp et bac
 
 
 
+[[mount-iscsi-volumes]]
 === Monter les volumes iSCSI
 
 Montez les volumes iSCSI non partagés sur chaque instance SQL :
@@ -371,6 +385,7 @@ $paths | % { New-Item -ItemType Directory -Path $_ -Force }
 
 
 
+[[configure-sql-server]]
 == Configurer SQL Server
 
 Configurez SQL Server sur les deux nœuds pour utiliser le compte de service de domaine, mettez à jour les chemins d'accès par défaut pour utiliser les volumes NetApp, et déplacez les bases de données système vers les nouveaux emplacements de stockage.
@@ -545,12 +560,14 @@ image::gcnv-sql-aoag-003.png[SQL Server Configuration Manager - Paramètres de d
 
 
 
+[[set-up-failover-cluster]]
 == Configurer un cluster de basculement
 
 Configurez le clustering de basculement Windows Server pour assurer une haute disponibilité pour SQL Server. Pour plus d'informations, consultez link:https://learn.microsoft.com/en-us/windows-server/failover-clustering/failover-clustering-overview["Documentation sur le clustering de basculement Windows Server"^].
 
 
 
+[[configure-firewall-rules]]
 === Configurer les règles du pare-feu
 
 Ouvrez les ports réseau requis sur les deux nœuds SQL pour activer la communication du cluster, la connectivité SQL Server et la réplication du groupe de disponibilité.
@@ -588,6 +605,7 @@ Get-NetAdapterBinding -ComponentID ms_tcpip6
 
 
 
+[[create-the-failover-cluster]]
 === Créer le cluster de basculement
 
 Créez un cluster de basculement Windows Server avec les deux nœuds SQL Server pour activer la haute disponibilité et le basculement automatique.
@@ -609,12 +627,14 @@ image::gcnv-sql-failover-confirm.png[Création d'un cluster de basculement]
 
 
 
+[[configure-cluster-quorum-with-file-share-witness]]
 == Configurer le quorum du cluster avec file share witness
 
 Configurez un témoin de partage de fichiers pour maintenir le quorum dans une configuration de cluster à deux nœuds. Le témoin fournit un vote supplémentaire pour éviter les situations de split-brain et garantir la disponibilité du cluster.
 
 
 
+[[create-file-share]]
 === Créer un partage de fichiers
 
 Créez un partage de fichiers sur une machine virtuelle dans une zone ou une région différente qui dispose d'une connectivité réseau et se trouve dans le même domaine Active Directory.
@@ -641,6 +661,7 @@ Assurez-vous que le compte utilisé pour créer le cluster (sqlcluwest1$) dispos
 
 
 
+[[configure-quorum-settings]]
 === Configurer les paramètres de quorum
 
 Configurez le cluster pour utiliser le file share witness pour le vote par quorum.
@@ -665,6 +686,7 @@ image::gcnv-sql-file-share-confirm.png[Quorum de cluster configuré avec file sh
 
 
 
+[[enable-always-on-availability-groups]]
 == Activer les groupes de disponibilité Always On
 
 Activez Always On availability groups sur les deux machines virtuelles SQL Server :
@@ -684,6 +706,7 @@ image::gcnv-sql-always-on-group.png[Activer la haute disponibilité Always On]
 
 
 
+[[create-a-database-on-the-first-sql-server-instance]]
 == Créez une base de données sur la première instance SQL Server
 
 Créez une base de données sur la première instance SQL Server.
@@ -704,6 +727,7 @@ GO
 
 
 
+[[create-and-configure-availability-group]]
 == Créer et configurer un groupe de disponibilité
 
 Créez un groupe de disponibilité Always On avec validation synchrone et basculement automatique pour assurer une haute disponibilité pour vos bases de données SQL Server.
@@ -779,6 +803,7 @@ image::gcnv-sql-avail-group-replica.png[Groupe de disponibilité créé avec suc
 
 
 
+[[create-dnn-listener-resource]]
 == Créer une ressource d'écoute DNN
 
 Créez un écouteur de Distributed Network Name (DNN) pour acheminer le trafic vers la ressource clusterisée appropriée sans nécessiter de load balancer.
@@ -807,6 +832,7 @@ Set-ClusterResourceDependency -Resource $AagResource -Dependency "[$Dns]"
 ----
 
 
+[[configure-possible-owners]]
 === Configurer les propriétaires possibles
 
 Par défaut, le cluster associe le nom DNS DNN à tous les nœuds. Exclure les nœuds ne participant pas au groupe de disponibilité :
@@ -826,6 +852,7 @@ image::gcnv-sql-configure-dns.png[Configurer les propriétaires possibles de DNN
 
 
 
+[[update-application-connection-strings]]
 == Mettre à jour les chaînes de connexion de l'application
 
 Mettez à jour les chaînes de connexion pour utiliser le nom de l'écouteur DNN et inclure le  `MultiSubnetFailover=True` paramètre :
@@ -840,6 +867,7 @@ NOTE: Si votre client ne prend pas en charge le paramètre MultiSubnetFailover, 
 
 
 
+[[test-failover]]
 == Tester le basculement
 
 Vérifiez la configuration du groupe de disponibilité et testez le mode de basculement pour vous assurer que le basculement automatique fonctionne correctement entre les nœuds.
@@ -890,6 +918,7 @@ image::gcnv-sql-success-failover.png[Tableau de bord Always On High Availability
 
 
 
+[[clean-up-resources]]
 == Nettoyer les ressources
 
 Après avoir terminé le tutoriel, supprimez les ressources que vous avez créées pour éviter des frais supplémentaires :
@@ -904,6 +933,7 @@ Reportez-vous à link:https://cloud.google.com/netapp/volumes/docs/configure-and
 
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour plus d'informations sur SQL Server sur Google Cloud avec le stockage NetApp, consultez la documentation suivante :

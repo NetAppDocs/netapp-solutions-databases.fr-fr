@@ -20,6 +20,7 @@ Cette solution fournit une vue d'ensemble et des détails pour le déploiement e
 
 
 
+[[purpose]]
 == But
 
 Les systèmes NetApp ASA offrent des solutions modernes à votre infrastructure SAN.  Ils simplifient à grande échelle et vous permettent d'accélérer vos applications critiques telles que les bases de données, de garantir que vos données sont toujours disponibles (99,9999 % de disponibilité) et de réduire le coût total de possession et l'empreinte carbone.  Les systèmes NetApp ASA incluent des modèles de la série A conçus pour les applications les plus exigeantes en performances et des modèles de la série C optimisés pour des déploiements rentables et de grande capacité.  Ensemble, les systèmes ASA des séries A et C offrent des performances exceptionnelles pour améliorer l'expérience client et réduire le temps d'obtention des résultats, maintenir les données critiques pour l'entreprise disponibles, protégées et sécurisées, et fournir une capacité plus efficace pour n'importe quelle charge de travail, soutenue par la garantie la plus efficace du secteur.
@@ -35,6 +36,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -47,18 +49,21 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[solution-test-and-validation-environment]]
 == Environnement de test et de validation de solutions
 
 Les tests et la validation de cette solution ont été réalisés dans un environnement de laboratoire qui pourrait ne pas correspondre à l’environnement de déploiement final.  Voir la section<<Facteurs clés à prendre en compte lors du déploiement>> pour plus d'informations.
 
 
 
+[[architecture]]
 === Architecture
 
 image:automation-ora-asa-iscsi-architecture.png["Cette image fournit une image détaillée de la configuration de déploiement Oracle dans le système NetApp ASA avec iSCSI et ASM."]
 
 
 
+[[hardware-and-software-components]]
 === Composants matériels et logiciels
 
 [cols="33%, 33%, 33%"]
@@ -102,6 +107,7 @@ image:automation-ora-asa-iscsi-architecture.png["Cette image fournit une image d
 |===
 
 
+[[oracle-database-configuration-in-the-lab-environment]]
 === Configuration de la base de données Oracle dans l'environnement de laboratoire
 
 [cols="33%, 33%, 33%"]
@@ -121,6 +127,7 @@ image:automation-ora-asa-iscsi-architecture.png["Cette image fournit une image d
 |===
 
 
+[[key-factors-for-deployment-consideration]]
 === Facteurs clés à prendre en compte lors du déploiement
 
 * *Disposition de stockage de la base de données Oracle.*  Dans ce déploiement Oracle automatisé, nous provisionnons quatre volumes de base de données pour héberger les binaires, les données et les journaux Oracle par défaut.  Nous créons ensuite deux groupes de disques ASM à partir des données et des journaux LUN.  Au sein du groupe de disques asm +DATA, nous provisionnons deux LUN de données dans un volume sur chaque nœud de cluster ASA A400 .  Dans le groupe de disques asm +LOGS, nous créons deux LUN dans un volume de journal sur un seul nœud ASA A400 .  Plusieurs LUN disposés dans un volume ONTAP offrent de meilleures performances en général.
@@ -132,12 +139,14 @@ image:automation-ora-asa-iscsi-architecture.png["Cette image fournit une image d
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 Les sections suivantes fournissent des procédures étape par étape pour le déploiement et la protection automatisés d'Oracle 19c dans NetApp ASA A400 avec des LUN de base de données montés directement via iSCSI vers la machine virtuelle DB dans un seul nœud. Redémarrez la configuration avec Oracle ASM comme gestionnaire de volume de base de données.
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -176,6 +185,7 @@ video::79095731-6b02-41d5-9fa1-b0c00100d055[panopto,width=360]
 ====
 
 
+[[automation-parameter-files]]
 === Fichiers de paramètres d'automatisation
 
 [%collapsible%open]
@@ -192,6 +202,7 @@ En plus de ces fichiers de variables définis par l'utilisateur, il existe plusi
 ====
 
 
+[[parameter-files-configuration]]
 === Configuration des fichiers de paramètres
 
 [%collapsible%open]
@@ -287,6 +298,7 @@ memory_limit: 8192
 ====
 
 
+[[playbook-execution]]
 === Exécution du manuel de jeu
 
 [%collapsible%open]
@@ -362,6 +374,7 @@ ansible-playbook -i hosts 5-destroy.yml -u admin -e @vars/vars.yml
 ====
 
 
+[[post-execution-validation]]
 === Validation post-exécution
 
 [%collapsible%open]
@@ -496,6 +509,7 @@ image:automation-ora-asa-em-003.png["Cette image fournit une vue de la base de d
 ====
 
 
+[[oracle-backup-restore-and-clone-with-snapcenter]]
 === Sauvegarde, restauration et clonage Oracle avec SnapCenter
 
 [%collapsible%open]
@@ -505,6 +519,7 @@ Se référer à TR-4979link:../oracle/aws-ora-fsx-vmc-guestmount.html#oracle-bac
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

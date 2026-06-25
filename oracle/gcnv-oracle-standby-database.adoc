@@ -15,6 +15,8 @@ Créez la base de données de secours physique Oracle en utilisant la réplicati
 
 
 
+[[step-1-configure-listener-and-data-guard-parameters]]
+[[primary-sys-password-and-dg-params]]
 == Étape 1 : Configurer les paramètres de l’écouteur et de Data Guard
 
 Configurez l'écouteur sur les deux hôtes de base de données pour prendre en charge les connexions Data Guard, y compris le  `_DGMGRL` service requis pour le broker. Configurez le fichier de mots de passe et les paramètres de journalisation d'archive sur la base de données principale.
@@ -61,6 +63,8 @@ $GRID_HOME/bin/lsnrctl status
 
 
 
+[[step-2-prepare-standby-pfile-and-nomount]]
+[[standby-init-ora-and-nomount]]
 == Étape 2 : Préparez le fichier pfile de secours et NOMOUNT
 
 Préparez l'instance de base de données de secours en copiant le fichier de mots de passe depuis la base principale, en créant un fichier pfile init.ora minimal avec les paramètres Data Guard, puis en démarrant l'instance en mode NOMOUNT.
@@ -140,6 +144,8 @@ L'instance de secours est maintenant en mode NOMOUNT sans fichiers de données j
 
 
 
+[[step-3-initialize-standby-storage-with-gcnv]]
+[[gcnv-standby-initialization]]
 == Étape 3 : Initialiser le stockage de secours avec GCNV
 
 Initialisez les volumes de secours dans  `oracle-pool-b`, attachez-les à  `oracdb2`, montez les groupes de disques ASM et finalisez l’instance de secours à l’état MOUNT.
@@ -148,6 +154,7 @@ Utilisez la réplication GCNV pour l’amorçage en production et l’amorçage 
 
 
 
+[[choose-the-seeding-path]]
 === Choisissez le chemin de seeding
 
 Choisissez la méthode d'ensemencement de secours en fonction de votre environnement et de vos exigences de récupération.
@@ -160,6 +167,8 @@ Tous les chemins se rejoignent à <<standby-iscsi-and-asm-before-rman,Monter les
 
 
 
+[[check-prerequisites]]
+[[gcnv-seed-prereqs]]
 === Vérifiez les prérequis
 
 Confirmez les prérequis suivants avant d'initialiser les volumes de secours.
@@ -190,6 +199,8 @@ gcloud netapp storage-pools create oracle-pool-b \
 
 
 
+[[create-and-sync-replications]]
+[[create-volume-replications]]
 === Créer et synchroniser des réplications
 
 Créez des relations de réplication entre les volumes principaux et les volumes de secours, puis attendez la fin de la synchronisation initiale.
@@ -212,6 +223,8 @@ Attendez que  `mirrorState` soit  `MIRRORED` et que la synchronisation initiale 
 
 
 
+[[cut-over-and-attach-standby-volumes]]
+[[cutover-quiesce-stop-repl-attach]]
 === Basculez et attachez les volumes de veille
 
 Mettez au repos le serveur principal, arrêtez la réplication après la synchronisation finale et attachez les volumes de destination au groupe d'hôtes de secours.
@@ -252,6 +265,8 @@ ALTER DATABASE END BACKUP;
 ----
 
 
+[[seed-from-snapshot]]
+[[snapshot-seed]]
 === Initialiser à partir d'un instantané
 
 Utilisez ce chemin pour un ensemencement ponctuel en laboratoire lorsque la réplication continue n'est pas nécessaire.
@@ -260,6 +275,8 @@ Pour un environnement de test ponctuel, créez un instantané source et créez d
 
 
 
+[[mount-standby-asm-disk-groups]]
+[[standby-iscsi-and-asm-before-rman]]
 === Monter les groupes de disques ASM de secours
 
 Sur l'hôte de secours, découvrez les chemins de stockage connectés et montez les groupes de disques ASM avant la restauration de la base de données.
@@ -274,6 +291,8 @@ ALTER DISKGROUP FRA MOUNT FORCE;
 ----
 
 
+[[finalize-the-standby-instance]]
+[[oracle-finalize]]
 === Finalisez l'instance de secours
 
 Restaurez le fichier de contrôle de secours, récupérez jusqu'au SCN capturé, convertissez en secours physique et démarrez la récupération gérée.
@@ -299,6 +318,8 @@ ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT FROM SESSION;
 
 
 
+[[step-4-register-standby-with-oracle-restart]]
+[[register-standby-with-oracle-restart]]
 == Étape 4 : Enregistrez le serveur de secours auprès d’Oracle Restart
 
 Enregistrez la base de données de secours auprès d'Oracle Restart afin que les redémarrages permettent la récupération automatique des groupes de disques ASM, le montage de la base de données de secours et le redémarrage de la récupération gérée. Ajoutez également le service applicatif aux deux ressources de base de données.
@@ -379,6 +400,7 @@ srvctl status database -db orcls
 
 
 
+[[whats-next]]
 == Et ensuite ?
 
 *Spécifique au niveau :*

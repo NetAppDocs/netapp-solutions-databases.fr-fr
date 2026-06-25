@@ -20,6 +20,7 @@ La solution fournit une boîte à outils d'automatisation basée sur Ansible pou
 
 
 
+[[purpose]]
 == But
 
 L'exploitation de la fonctionnalité de clonage rapide (minutes) des volumes NetApp ONTAP pour Oracle VLDB à partir d'une copie de sauvegarde d'image de base de données sur serveur dans le cloud public répond à plusieurs objectifs.  Il fournit une base de données de production en temps quasi réel et en taille réelle pour les cas d'utilisation de reporting, de développement ou d'UAT.  Cela permet de réduire les coûts de stockage, en particulier lorsqu'un clonage fin des volumes de sauvegarde de la base de données principale est une option.  Cette boîte à outils d'automatisation basée sur Ansible permet aux utilisateurs de configurer, cloner et actualiser les bases de données Oracle clonées selon les calendriers souhaités par l'utilisateur pour une gestion simplifiée du cycle de vie.  La boîte à outils est destinée au cas d'utilisation d'Oracle VLDB déployé sur le cloud public de Google et utilise GCNV comme stockage de sauvegarde de base de données sur serveur.
@@ -32,6 +33,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -43,6 +45,7 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[license]]
 == Licence
 
 En accédant, en téléchargeant, en installant ou en utilisant le contenu de ce référentiel GitHub, vous acceptez les termes de la licence énoncés danslink:https://github.com/NetApp/na_ora_hadr_failover_resync/blob/master/LICENSE.TXT["Fichier de licence"^] .
@@ -52,10 +55,12 @@ NOTE: Il existe certaines restrictions concernant la production et/ou le partage
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -83,6 +88,7 @@ NOTE: Pour simplifier, le serveur Oracle cible du clone doit être configuré de
 ====
 
 
+[[download-the-toolkit]]
 === Téléchargez la boîte à outils
 
 [%collapsible%open]
@@ -97,6 +103,7 @@ NOTE: La boîte à outils n'est accessible qu'aux utilisateurs internes de NetAp
 ====
 
 
+[[ansible-source-and-target-hosts-file-configuration]]
 === Configuration des fichiers hôtes source et cible d'Ansible
 
 [%collapsible%open]
@@ -119,6 +126,7 @@ localhost ansible_connection=local
 ====
 
 
+[[global-variables-configuration]]
 === Configuration des variables globales
 
 [%collapsible%open]
@@ -186,6 +194,7 @@ NOTE: Pour un déploiement d'automatisation plus sécurisé, Ansible Vault peut 
 ====
 
 
+[[host-variables-configuration]]
 === Configuration des variables de l'hôte
 
 [%collapsible%open]
@@ -205,6 +214,7 @@ sga_size: 4096M
 ====
 
 
+[[additional-clone-target-oracle-server-configuration]]
 === Configuration supplémentaire du serveur Oracle cible de clonage
 
 [%collapsible%open]
@@ -216,6 +226,7 @@ Si la base de données principale est configurée avec ASM, le groupe principal 
 ====
 
 
+[[playbook-execution]]
 === Exécution du manuel de jeu
 
 [%collapsible%open]
@@ -249,6 +260,7 @@ NOTE: L'exécution de la boîte à outils à différentes étapes s'interrompt p
 ====
 
 
+[[playbook-execution-details]]
 === Détails d'exécution du manuel de jeu
 
 [%collapsible%open]
@@ -640,6 +652,7 @@ End Oracle DB clone or refresh at 2025-0627-084452
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur l'automatisation des solutions NetApp , consultez le site Web suivantlink:https://docs.netapp.com/us-en/netapp-solutions-dataops/automation/automation-introduction.html["Automatisation des solutions NetApp ^"^]

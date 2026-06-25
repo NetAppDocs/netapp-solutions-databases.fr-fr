@@ -18,6 +18,7 @@ Cette page décrit la méthode automatisée de déploiement d'Oracle19c sur le s
 
 
 
+[[automated-deployment-of-oracle19c-for-ontap-on-nfs]]
 == Déploiement automatisé d'Oracle19c pour ONTAP sur NFS
 
 Les organisations automatisent leurs environnements pour gagner en efficacité, accélérer les déploiements et réduire les efforts manuels.  Des outils de gestion de configuration comme Ansible sont utilisés pour rationaliser les opérations de base de données d’entreprise.  Dans cette solution, nous démontrons comment vous pouvez utiliser Ansible pour automatiser le provisionnement et la configuration d'Oracle 19c avec NetApp ONTAP.  En permettant aux administrateurs de stockage, aux administrateurs système et aux administrateurs de bases de données de déployer de manière cohérente et rapide de nouveaux systèmes de stockage, de configurer des serveurs de base de données et d'installer le logiciel Oracle 19c, vous bénéficiez des avantages suivants :
@@ -39,6 +40,7 @@ Pour plus de détails ou pour commencer, veuillez consulter les vidéos de prés
 
 
 
+[[awxtower-deployments]]
 === Déploiements AWX/Tour
 
 Partie 1 : Prise en main, exigences, détails d'automatisation et configuration initiale d'AWX/Tower
@@ -51,6 +53,7 @@ Partie 2 : Variables et exécution du Playbook
 video::6da1b960-e1c9-4950-b750-b01200f0bdfa[panopto]
 
 
+[[cli-deployment]]
 === Déploiement CLI
 
 Partie 1 : Prise en main, exigences, détails d'automatisation et configuration de l'hôte de contrôle Ansible

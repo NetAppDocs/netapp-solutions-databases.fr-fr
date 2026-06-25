@@ -18,6 +18,7 @@ La solution fournit une vue d'ensemble et des détails sur la configuration d'Or
 
 
 
+[[purpose]]
 == But
 
 Oracle Data Guard garantit une haute disponibilité, une protection des données et une reprise après sinistre pour les données d'entreprise dans une configuration de réplication de base de données principale et de base de données de secours.  Oracle Active Data Guard permet aux utilisateurs d'accéder aux bases de données de secours pendant que la réplication des données est active de la base de données principale vers les bases de données de secours.  Data Guard est une fonctionnalité d'Oracle Database Enterprise Edition.  Cela ne nécessite pas de licence distincte.  D'autre part, Active Data Guard est une option Oracle Database Enterprise Edition et nécessite donc une licence distincte.  Plusieurs bases de données de secours peuvent recevoir la réplication des données à partir d'une base de données principale dans la configuration Active Data Guard.  Cependant, chaque base de données de secours supplémentaire nécessite une licence Active Data Guard et un stockage supplémentaire en fonction de la taille de la base de données principale.  Les coûts opérationnels s’accumulent rapidement.
@@ -33,6 +34,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -45,18 +47,21 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[solution-test-and-validation-environment]]
 == Environnement de test et de validation de solutions
 
 Les tests et la validation de cette solution ont été effectués dans un environnement de laboratoire cloud Azure qui peut ne pas correspondre à l’environnement de déploiement utilisateur réel. Pour plus d'informations, consultez la section <<Facteurs clés à prendre en compte lors du déploiement>> .
 
 
 
+[[architecture]]
 === Architecture
 
 image:azure-ora-anf-data-guard-architecture.png["Cette image fournit une image détaillée de l’implémentation d’Oracle Data Guard dans le cloud Azure sur ANF."]
 
 
 
+[[hardware-and-software-components]]
 === Composants matériels et logiciels
 
 [cols="33%, 33%, 33%"]
@@ -91,6 +96,7 @@ image:azure-ora-anf-data-guard-architecture.png["Cette image fournit une image d
 |===
 
 
+[[oracle-data-guard-configuration-with-hypothetical-ny-to-la-dr-setup]]
 === Configuration d'Oracle Data Guard avec configuration hypothétique de reprise après sinistre de New York à Los Angeles
 
 [cols="33%, 33%, 33%"]
@@ -110,6 +116,7 @@ image:azure-ora-anf-data-guard-architecture.png["Cette image fournit une image d
 |===
 
 
+[[key-factors-for-deployment-consideration]]
 === Facteurs clés à prendre en compte lors du déploiement
 
 * *Clone de base de données de secours.*  Lors de la réception et de l'application des journaux de transactions de la base de données principale, la base de données de secours physique peut être clonée et montée sur une machine virtuelle DB pour prendre en charge d'autres charges de travail telles que DEV, TEST ou Report.  Le clone peut être un clone fin ou épais.  À l'heure actuelle, ANF ne prend en charge que le clone épais, qui est une copie complète de la base de données de secours.  L'option de clone mince ANF sera bientôt disponible.  Pour les copies clonées de manière fine des volumes de base de données, il partage les mêmes volumes de base de données de secours et utilise la technologie de copie sur écriture pour gérer les E/S d'écriture.  Ainsi, les clones sont très efficaces en termes de stockage et peuvent être utilisés pour de nombreux autres cas d'utilisation avec une allocation de stockage minimale et incrémentielle pour les nouvelles E/S d'écriture.  Cela permet de réaliser d’énormes économies de coûts de stockage en réduisant considérablement l’empreinte de stockage d’Active Data Guard.  NetApp recommande de minimiser les activités FlexClone en cas de basculement de la base de données du stockage principal vers le stockage ANF de secours afin de maintenir les performances Oracle à un niveau élevé.
@@ -123,6 +130,7 @@ image:azure-ora-anf-data-guard-architecture.png["Cette image fournit une image d
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 Il est supposé que votre base de données Oracle principale est déjà déployée dans un environnement cloud Azure au sein d’un VNet comme point de départ pour la configuration d’Oracle Data Guard.  Idéalement, la base de données principale est déployée sur un stockage ANF avec montage NFS.  Trois points de montage NFS sont créés pour le stockage de la base de données Oracle : mount /u01 pour les fichiers binaires Oracle, mount /u02 pour les fichiers de données Oracle et un fichier de contrôle, mount /u03 pour les fichiers journaux Oracle actuels et archivés, et un fichier de contrôle redondant.
@@ -131,6 +139,7 @@ Votre base de données Oracle principale peut également être exécutée sur un
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -170,6 +179,7 @@ Valider que les flux de trafic sont établis (cliquez sur les trois points pour 
 ====
 
 
+[[prepare-the-primary-database-for-data-guard]]
 === Préparer la base de données principale pour Data Guard
 
 [%collapsible%open]
@@ -480,6 +490,7 @@ Ceci termine la configuration de la base de données principale pour Data Guard.
 ====
 
 
+[[prepare-standby-database-and-activate-data-guard]]
 === Préparez la base de données de secours et activez Data Guard
 
 [%collapsible%open]
@@ -842,6 +853,7 @@ Ceci termine la configuration de la protection Data Guard pour NTAP du serveur p
 ====
 
 
+[[setup-data-guard-broker]]
 === Configurer Data Guard Broker
 
 [%collapsible%open]
@@ -939,6 +951,7 @@ En cas de panne, Data Guard Broker peut être utilisé pour basculer instantané
 ====
 
 
+[[clone-standby-database-for-other-use-cases]]
 === Cloner la base de données de secours pour d'autres cas d'utilisation
 
 [%collapsible%open]
@@ -1139,6 +1152,7 @@ Ceci termine la démonstration du clone de base de données de secours Oracle da
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

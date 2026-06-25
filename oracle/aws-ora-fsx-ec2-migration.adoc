@@ -20,6 +20,7 @@ Les sections suivantes fournissent les facteurs clés à prendre en compte lors 
 
 
 
+[[ontap-storage-is-available-on-premises]]
 == Le stockage ONTAP est disponible sur site
 
 Si la base de données Oracle sur site se trouve sur une baie de stockage ONTAP , il est alors plus facile de configurer la réplication pour la migration de la base de données à l'aide de la technologie NetApp SnapMirror intégrée au stockage AWS FSx ONTAP .  Le processus de migration peut être orchestré à l’aide de la console NetApp BlueXP .
@@ -39,6 +40,7 @@ La vidéo suivante montre comment migrer une base de données Oracle depuis un s
 video::c0df32f8-d6d3-4b79-b0bd-b01200f3a2e8[panopto]
 
 
+[[ontap-storage-is-not-available-on-premises]]
 == Le stockage ONTAP n'est pas disponible sur site
 
 Si la base de données Oracle sur site est hébergée sur un stockage tiers autre ONTAP, la migration de la base de données est basée sur la restauration d'une copie de sauvegarde de la base de données Oracle.  Vous devez lire le journal d'archive pour le mettre à jour avant de passer à autre chose.
@@ -58,6 +60,7 @@ AWS S3 peut être utilisé comme zone de stockage intermédiaire pour le déplac
 
 
 
+[[migrate-on-premises-oracle-databases-to-aws-fsxec2-using-pdb-relocation-with-maximum-availability]]
 == Migrer les bases de données Oracle sur site vers AWS FSx/EC2 à l'aide de la relocalisation PDB avec une disponibilité maximale
 
 Cette approche de migration est la mieux adaptée aux bases de données Oracle déjà déployées dans le modèle multilocataire PDB/CDB, et le stockage ONTAP n'est pas disponible sur site.  La méthode de relocalisation PDB utilise la technologie de clonage à chaud Oracle PDB pour déplacer les PDB entre une CDB source et une CDB cible tout en minimisant les interruptions de service.

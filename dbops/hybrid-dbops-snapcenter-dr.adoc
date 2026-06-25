@@ -18,6 +18,7 @@ Les entreprises ont adopté le cloud public comme une ressource viable et une de
 
 
 
+[[clone-an-on-premises-oracle-production-db-to-cloud-for-dr]]
 == Cloner une base de données de production Oracle sur site vers le cloud pour la reprise après sinistre
 
 . Pour valider que la récupération du clone s'exécute via le dernier journal disponible, nous avons créé une petite table de test et inséré une ligne.  Les données de test seront récupérées après une récupération complète du dernier journal disponible.
@@ -97,6 +98,7 @@ image:snapctr-ora-dr-016-a.png["Figure montrant une boîte de dialogue d'entrée
 
 
 
+[[post-dr-clone-validation-and-configuration-for-oracle]]
 == Validation et configuration du clone post-DR pour Oracle
 
 . Validez la dernière transaction de test qui a été vidée, répliquée et récupérée à l’emplacement DR dans le cloud.
@@ -117,6 +119,7 @@ NOTE: La division du clone peut entraîner une utilisation temporaire de l'espac
 
 
 
+[[clone-an-on-premises-sql-production-db-to-cloud-for-dr]]
 == Cloner une base de données de production SQL sur site vers le cloud pour la reprise après sinistre
 
 . De même, pour valider que la récupération du clone SQL a été exécutée via le dernier journal disponible, nous avons créé une petite table de test et inséré une ligne.  Les données de test seront récupérées après une récupération complète du dernier journal disponible.
@@ -162,6 +165,7 @@ image:snapctr-sql-dr-010.png["Figure montrant une boîte de dialogue d'entrée/s
 
 
 
+[[post-dr-clone-validation-and-configuration-for-sql]]
 == Validation et configuration du clone post-DR pour SQL
 
 . Surveiller l'état du travail de clonage.
@@ -179,6 +183,7 @@ image:snapctr-sql-dr-012.png["Figure montrant une boîte de dialogue d'entrée/s
 
 
 
+[[where-to-go-for-help]]
 == Où aller chercher de l’aide ?
 
 Si vous avez besoin d'aide avec cette solution et ces cas d'utilisation, veuillez rejoindre lelink:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.

@@ -20,6 +20,7 @@ Cette solution fournit une boîte à outils utile pour dimensionner le calcul et
 
 
 
+[[purpose]]
 == But
 
 Le déplacement de la charge de travail Oracle existante d'une plate-forme à une autre, par exemple d'un environnement local vers un cloud public, nécessite de dimensionner le calcul et le stockage sur la plate-forme cible pour répondre aux exigences de performances et de niveau de service.  Cette documentation présente une boîte à outils simple pour atteindre cet objectif.
@@ -34,6 +35,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -45,6 +47,7 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[license]]
 == Licence
 
 En accédant, en téléchargeant, en installant ou en utilisant le contenu de ce référentiel de boîte à outils, vous acceptez les termes de la licence énoncés danslink:https://netapp.sharepoint.com/sites/CIEBuilt-OnsTeam-DatabasesandApps/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FCIEBuilt%2DOnsTeam%2DDatabasesandApps%2FShared%20Documents%2FDatabases%20and%20Apps%2FDatabase%20Solutions%2FDB%20Sizing%20Toolkits%2FOracle%20Sizing%20Guidance%20for%20ANF%2FLICENSE%2ETXT&parent=%2Fsites%2FCIEBuilt%2DOnsTeam%2DDatabasesandApps%2FShared%20Documents%2FDatabases%20and%20Apps%2FDatabase%20Solutions%2FDB%20Sizing%20Toolkits%2FOracle%20Sizing%20Guidance%20for%20ANF["Fichier de licence"^] .
@@ -54,10 +57,12 @@ NOTE: Il existe certaines restrictions concernant la production et/ou le partage
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -71,6 +76,7 @@ Le déploiement nécessite les prérequis suivants.
 ====
 
 
+[[download-the-toolkit]]
 === Téléchargez la boîte à outils
 
 [%collapsible%open]
@@ -80,6 +86,7 @@ Récupérer la boîte à outils du référentiellink:https://netapp.sharepoint.c
 ====
 
 
+[[how-to-use-the-toolkit]]
 === Comment utiliser la boîte à outils ?
 
 [%collapsible%open]
@@ -95,6 +102,7 @@ La boîte à outils se compose d'un analyseur HTML basé sur le Web et de deux s
 ====
 
 
+[[toolkit-usage-demonstration]]
 === Démonstration de l'utilisation de la boîte à outils
 
 [%collapsible%open]

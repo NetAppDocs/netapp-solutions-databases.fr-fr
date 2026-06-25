@@ -25,6 +25,7 @@ Ce document couvre les étapes nécessaires pour effectuer la sauvegarde et la r
 
 
 
+[[snapcenter-configuration]]
 == Configuration de SnapCenter
 
 Les étapes suivantes doivent être effectuées pour la configuration de SnapCenter et la protection des ressources Microsoft SQL Server.  Chacune des étapes suivantes est détaillée dans les sections suivantes.
@@ -38,6 +39,7 @@ Les étapes suivantes doivent être effectuées pour la configuration de SnapCen
 
 
 
+[[snapcenter-newly-installed-user-interface]]
 == Interface utilisateur SnapCenter nouvellement installée
 
 Configurez les informations d’identification pour la sauvegarde SQL Server et restaurez l’utilisateur avec les droits d’administrateur système.
@@ -144,6 +146,7 @@ image:sqlsb-aws-015.png["Figure montrant une boîte de dialogue d'entrée/sortie
 ====
 
 
+[[configure-a-backup-policy]]
 == Configurer une politique de sauvegarde
 
 Une politique de sauvegarde est un ensemble de règles qui régissent la manière de gérer, de planifier et de conserver les sauvegardes.  Il aide à déterminer le type et la fréquence de sauvegarde en fonction du SLA de votre entreprise.
@@ -196,6 +199,7 @@ image:sqlsb-aws-024.png["Figure montrant une boîte de dialogue d'entrée/sortie
 ====
 
 
+[[configure-and-protect-mssql-server-database]]
 == Configurer et protéger la base de données MSSQL Server
 
 . Définissez la date de début et la date d’expiration de la politique de sauvegarde.
@@ -223,6 +227,7 @@ image:sqlsb-aws-029.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[snapcenter-backup-operations]]
 == Opérations de sauvegarde SnapCenter
 
 Pour créer des sauvegardes SQL Server à la demande, procédez comme suit :
@@ -243,6 +248,7 @@ image:sqlsb-aws-032.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[monitor-backup-job]]
 == Surveiller la tâche de sauvegarde
 
 . Dans l'onglet *Moniteur*, cliquez sur la tâche et sélectionnez *Détails* sur la droite pour afficher les tâches.
@@ -258,6 +264,7 @@ Une fois la sauvegarde terminée, une nouvelle entrée s'affiche dans la vue Top
 
 
 
+[[backup-operation-for-multiple-databases]]
 == Opération de sauvegarde pour plusieurs bases de données
 
 Pour configurer une politique de sauvegarde pour plusieurs bases de données SQL Server, créez des politiques de groupe de ressources en procédant comme suit :
@@ -326,6 +333,7 @@ image:sqlsb-aws-047.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[configure-and-protect-multiple-sql-server-databases]]
 == Configurer et protéger plusieurs bases de données SQL Server
 
 . Cliquez sur le signe (*+*) pour configurer la date de début et la date d'expiration.
@@ -355,6 +363,7 @@ image:sqlsb-aws-053.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[trigger-on-demand-backup-for-multiple-sql-server-databases]]
 == Déclencher une sauvegarde à la demande pour plusieurs bases de données SQL Server
 
 . Dans l’onglet *Ressource*, sélectionnez Afficher.  Dans le menu déroulant, sélectionnez *Groupe de ressources*.
@@ -378,6 +387,7 @@ image:sqlsb-aws-057.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[monitor-multiple-database-backup-jobs]]
 == Surveiller les tâches de sauvegarde de plusieurs bases de données
 
 Dans la barre de navigation de gauche, cliquez sur *Surveiller*, sélectionnez la tâche de sauvegarde et cliquez sur *Détails* pour afficher la progression de la tâche.
@@ -390,6 +400,7 @@ image:sqlsb-aws-059.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[transaction-log-backup-for-multiple-database-backup]]
 == Sauvegarde du journal des transactions pour la sauvegarde de plusieurs bases de données
 
 SnapCenter prend en charge les modèles de récupération complète, journalisée en masse et simple.  Le mode de récupération simple ne prend pas en charge la sauvegarde du journal transactionnel.
@@ -446,6 +457,7 @@ image:sqlsb-aws-069.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[configure-and-protect-multiple-mssql-server-databases]]
 == Configurer et protéger plusieurs bases de données MSSQL Server
 
 . Cliquez sur la politique de sauvegarde du journal des transactions nouvellement créée.
@@ -477,6 +489,7 @@ image:sqlsb-aws-075.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[triggering-an-on-demand-transaction-log-backup-for-mutiple-sql-server-databases]]
 == Déclenchement d'une sauvegarde du journal des transactions à la demande pour plusieurs bases de données SQL Server
 
 Pour déclencher une sauvegarde à la demande du journal transactionnel pour plusieurs bases de données SQL Server, procédez comme suit :
@@ -498,6 +511,7 @@ image:sqlsb-aws-078.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[monitoring]]
 == Surveillance
 
 Accédez à l’onglet *Surveillance* et surveillez la progression de la tâche de sauvegarde.
@@ -506,6 +520,7 @@ image:sqlsb-aws-079.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[restore-and-recovery]]
 == Restauration et récupération
 
 Consultez les conditions préalables suivantes nécessaires à la restauration d’une base de données SQL Server dans SnapCenter.
@@ -519,6 +534,7 @@ Consultez les conditions préalables suivantes nécessaires à la restauration d
 
 
 
+[[restoring-deleted-tables-on-a-sql-server-database-to-a-point-in-time]]
 == Restauration des tables supprimées d'une base de données SQL Server à un moment donné
 
 Pour restaurer une base de données SQL Server à un moment donné, procédez comme suit :
@@ -582,6 +598,7 @@ image:sqlsb-aws-090.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[monitoring-the-restore-progress]]
 == Suivi de la progression de la restauration
 
 . Dans l'onglet *Surveillance*, cliquez sur les détails de la tâche de restauration pour afficher la progression de la tâche de restauration.
@@ -600,6 +617,7 @@ image:sqlsb-aws-093.png["Figure montrant une boîte de dialogue d'entrée/sortie
 
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

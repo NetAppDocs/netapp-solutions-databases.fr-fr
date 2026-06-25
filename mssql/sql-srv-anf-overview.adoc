@@ -24,6 +24,7 @@ La plupart des organisations informatiques adoptent une approche axée sur le cl
 
 
 
+[[use-case]]
 == Cas d'utilisation
 
 Le déplacement du parc SQL Server vers Azure et l'intégration de SQL Server à la vaste gamme de fonctionnalités de plate-forme en tant que service (PaaS) d'Azure, telles qu'Azure Data Factory, Azure IoT Hub et Azure Machine Learning, créent une valeur commerciale considérable pour soutenir la transformation numérique.  L'adoption du cloud permet également à l'unité commerciale concernée de se concentrer sur la productivité et de fournir de nouvelles fonctionnalités et améliorations plus rapidement (cas d'utilisation DevTest) qu'en s'appuyant sur le modèle CAPEX ou les modèles de cloud privé traditionnels.  Ce document couvre un déploiement en temps réel du groupe de disponibilité SQL Server Always On (AOAG) sur Azure NetApp Files en exploitant les machines virtuelles Azure.

@@ -20,6 +20,7 @@ Les sections suivantes décrivent les principales considérations à prendre en 
 
 
 
+[[vm-performance]]
 == Performances de la machine virtuelle
 
 La sélection de la bonne taille de machine virtuelle est importante pour des performances optimales d’une base de données relationnelle dans un cloud public.  Pour de meilleures performances, NetApp recommande d'utiliser une instance EC2 M5 Series pour le déploiement Oracle, optimisée pour les charges de travail de base de données.  Le même type d’instance est également utilisé pour alimenter une instance RDS pour Oracle par AWS.
@@ -30,6 +31,7 @@ La sélection de la bonne taille de machine virtuelle est importante pour des pe
 
 
 
+[[storage-layout-and-settings]]
 == Disposition et paramètres de stockage
 
 NetApp recommande la disposition de stockage suivante :
@@ -54,6 +56,7 @@ Passez en revue lelink:https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/perform
 
 
 
+[[nfs-configuration]]
 == Configuration NFS
 
 Linux, le système d’exploitation le plus courant, inclut des fonctionnalités NFS natives.  Oracle propose le client NFS direct (dNFS) intégré nativement à Oracle.  Oracle prend en charge NFSv3 depuis plus de 20 ans. dNFS est pris en charge avec NFSv3 avec toutes les versions d'Oracle.  NFSv4 est pris en charge par tous les systèmes d'exploitation qui suivent la norme NFSv4. La prise en charge dNFS pour NFSv4 nécessite Oracle 12.1.0.2 ou supérieur.  NFSv4.1 nécessite une prise en charge spécifique du système d'exploitation.  Consultez l'outil NetApp Interoperability Matrix (IMT) pour connaître les systèmes d'exploitation pris en charge. La prise en charge dNFS pour NFSv4.1 nécessite la version Oracle 19.3.0.0 ou supérieure.
@@ -82,6 +85,7 @@ NOTE: Avant d'utiliser dNFS, vérifiez que les correctifs décrits dans Oracle D
 
 
 
+[[high-availability]]
 == Haute disponibilité
 
 Comme indiqué dans l’architecture de la solution, HA est basé sur la réplication au niveau du stockage.  Par conséquent, le démarrage et la disponibilité d’Oracle dépendent de la rapidité avec laquelle les capacités de calcul et de stockage peuvent être mises en service et récupérées.  Voir les facteurs clés suivants :

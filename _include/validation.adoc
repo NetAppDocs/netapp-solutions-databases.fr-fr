@@ -91,6 +91,7 @@ Cela confirme que l'écouteur Oracle fonctionne correctement.
 
 
 
+[[where-to-go-for-help]]
 === Où aller chercher de l’aide ?
 
 Si vous avez besoin d'aide avec la boîte à outils, veuillez vous joindre à nous.link:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.

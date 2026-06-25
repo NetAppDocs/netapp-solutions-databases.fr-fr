@@ -22,6 +22,7 @@ Les sections suivantes fournissent des détails sur la migration des bases de do
 
 
 
+[[converting-a-single-instance-non-cdb-to-a-pdb-in-a-multitenant-cdb]]
 == Conversion d'une instance unique non-CDB en PDB dans une CDB multilocataire
 
 Si vous disposez toujours d'une base de données Oracle à instance unique, elle doit être convertie en base de données conteneur multilocataire, que vous souhaitiez la migrer vers le cloud ou non, car Oracle cessera bientôt de prendre en charge les bases de données à instance unique.
@@ -116,6 +117,7 @@ Arrêtez et redémarrez la base de données du conteneur.  La base de données N
 
 
 
+[[migrate-on-premises-oracle-databases-to-azure-with-pdb-relocation]]
 == Migrer les bases de données Oracle sur site vers Azure avec la relocalisation PDB
 
 La relocalisation Oracle PDB avec l'option de disponibilité maximale utilise la technologie de clonage à chaud PDB, qui permet la disponibilité de la PDB source pendant que la PDB est copiée vers la cible.  Lors du basculement, les connexions utilisateur sont automatiquement redirigées vers le PDB cible.  Ainsi, les temps d’arrêt sont minimisés indépendamment de la taille du PDB.  NetApp fournit une boîte à outils basée sur Ansible qui automatise la procédure de migration.
@@ -160,6 +162,7 @@ NOTE: Le contrôleur Ansible peut être situé sur site ou dans le cloud Azure. 
 
 
 
+[[additional-oracle-database-migration-options]]
 == Options supplémentaires de migration de base de données Oracle
 
 Veuillez consulter la documentation Microsoft pour des options de migration supplémentaires :link:https://learn.microsoft.com/en-us/azure/architecture/example-scenario/oracle-migrate/oracle-migration-overview["Processus de décision de migration de la base de données Oracle"^] .

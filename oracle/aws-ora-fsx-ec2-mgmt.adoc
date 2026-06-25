@@ -31,12 +31,14 @@ Le clonage de base de données crée une réplique d'une base de données princi
 
 
 
+[[taking-a-snapshot]]
 == Prendre un instantané
 
 Une base de données Oracle EC2/FSx est régulièrement sauvegardée à des intervalles configurés par l'utilisateur.  Un utilisateur peut également effectuer une sauvegarde instantanée ponctuelle à tout moment.  Cela s'applique aussi bien aux sauvegardes de snapshots de bases de données complètes qu'aux sauvegardes de snapshots de journaux d'archives uniquement.
 
 
 
+[[taking-a-full-database-snapshot]]
 === Prendre un instantané complet de la base de données
 
 Un instantané complet de la base de données inclut tous les fichiers Oracle, y compris les fichiers de données, les fichiers de contrôle et les fichiers journaux d'archive.
@@ -63,6 +65,7 @@ image:aws-rds-custom-deploy-snp-013.png["Figure montrant une boîte de dialogue 
 
 
 
+[[taking-an-archive-log-snapshot]]
 === Prendre un instantané du journal d'archive
 
 Un instantané du journal d'archive est uniquement pris pour le volume du journal d'archive Oracle.
@@ -89,6 +92,7 @@ image:aws-rds-custom-deploy-snp-016.png["Figure montrant une boîte de dialogue 
 
 
 
+[[restoring-to-a-point-in-time]]
 == Restauration à un moment précis
 
 La restauration basée sur SnapCenter à un moment donné est exécutée sur le même hôte d’instance EC2.  Suivez les étapes suivantes pour effectuer la restauration :
@@ -160,6 +164,7 @@ image:aws-rds-custom-deploy-snp-029-b.png["Figure montrant une boîte de dialogu
 
 
 
+[[creating-a-database-clone]]
 == Création d'un clone de base de données
 
 La section suivante montre comment utiliser le flux de travail de clonage SnapCenter pour créer un clone de base de données à partir d'une base de données principale vers une instance EC2 de secours.
@@ -247,6 +252,7 @@ NOTE: Au lieu de copies de sauvegarde Oracle principales, un clone peut égaleme
 
 
 
+[[ha-failover-to-standby-and-resync]]
 == Basculement HA vers le mode veille et resynchronisation
 
 Le cluster Oracle HA de secours offre une haute disponibilité en cas de panne du site principal, soit au niveau de la couche de calcul, soit au niveau de la couche de stockage.  L’un des avantages majeurs de la solution est qu’un utilisateur peut tester et valider l’infrastructure à tout moment ou à n’importe quelle fréquence.  Le basculement peut être simulé par l'utilisateur ou déclenché par une panne réelle.  Les processus de basculement sont identiques et peuvent être automatisés pour une récupération rapide des applications.

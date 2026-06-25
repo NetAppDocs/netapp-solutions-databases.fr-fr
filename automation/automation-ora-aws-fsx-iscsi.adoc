@@ -20,6 +20,7 @@ Cette solution fournit une vue d'ensemble et des détails pour le déploiement e
 
 
 
+[[purpose]]
 == But
 
 Amazon FSx ONTAP est un service de stockage qui vous permet de lancer et d'exécuter des systèmes de fichiers NetApp ONTAP entièrement gérés dans le cloud AWS.  Il fournit les fonctionnalités, les performances, les capacités et les API familières des systèmes de fichiers NetApp avec l'agilité, l'évolutivité et la simplicité d'un service AWS entièrement géré.  Il vous permet d'exécuter la charge de travail de base de données la plus exigeante, telle qu'Oracle, dans le cloud AWS en toute tranquillité d'esprit.
@@ -35,6 +36,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -47,18 +49,21 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[solution-test-and-validation-environment]]
 == Environnement de test et de validation de solutions
 
 Les tests et la validation de cette solution ont été réalisés dans un environnement de laboratoire qui pourrait ne pas correspondre à l’environnement de déploiement final.  Voir la section<<Facteurs clés à prendre en compte lors du déploiement>> pour plus d'informations.
 
 
 
+[[architecture]]
 === Architecture
 
 image:automation-ora-aws-fsx-iscsi-architecture.png["Cette image fournit une image détaillée de la configuration de déploiement Oracle dans le cloud public AWS avec iSCSI et ASM."]
 
 
 
+[[hardware-and-software-components]]
 === Composants matériels et logiciels
 
 [cols="33%, 33%, 33%"]
@@ -99,6 +104,7 @@ image:automation-ora-aws-fsx-iscsi-architecture.png["Cette image fournit une ima
 |===
 
 
+[[oracle-database-configuration-in-the-lab-environment]]
 === Configuration de la base de données Oracle dans l'environnement de laboratoire
 
 [cols="33%, 33%, 33%"]
@@ -118,6 +124,7 @@ image:automation-ora-aws-fsx-iscsi-architecture.png["Cette image fournit une ima
 |===
 
 
+[[key-factors-for-deployment-consideration]]
 === Facteurs clés à prendre en compte lors du déploiement
 
 * *Disposition de stockage de la base de données Oracle.*  Dans ce déploiement Oracle automatisé, nous provisionnons quatre volumes de base de données pour héberger les binaires, les données et les journaux Oracle par défaut.  Un seul lun dans un volume est alloué au binaire Oracle.  Nous créons ensuite deux groupes de disques ASM à partir des données et des journaux LUN.  Dans le groupe de disques asm +DATA, nous provisionnons deux volumes de données avec deux LUN dans un volume.  Dans le groupe de disques asm +LOGS, nous créons deux lun dans un volume de journal.  Plusieurs LUN disposés dans un volume ONTAP offrent de meilleures performances en général.
@@ -129,12 +136,14 @@ image:automation-ora-aws-fsx-iscsi-architecture.png["Cette image fournit une ima
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 Les sections suivantes fournissent des procédures étape par étape pour le déploiement et la protection automatisés d'Oracle 19c sur le système de fichiers Amazon FSx ONTAP avec des LUN de base de données montés directement via iSCSI vers une machine virtuelle d'instance EC2 dans un seul nœud. Redémarrez la configuration avec Oracle ASM comme gestionnaire de volume de base de données.
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -183,6 +192,7 @@ video::81e389a0-d9b8-495c-883b-b0d701710847[panopto,width=360]
 ====
 
 
+[[automation-parameter-files]]
 === Fichiers de paramètres d'automatisation
 
 [%collapsible%open]
@@ -199,6 +209,7 @@ En plus de ces fichiers de variables définis par l'utilisateur, il existe plusi
 ====
 
 
+[[parameter-files-configuration]]
 === Configuration des fichiers de paramètres
 
 [%collapsible%open]
@@ -279,6 +290,7 @@ memory_limit: 8192
 ====
 
 
+[[playbook-execution]]
 === Exécution du manuel de jeu
 
 [%collapsible%open]
@@ -354,6 +366,7 @@ ansible-playbook -i hosts 5-destroy.yml -u ec2-user -e @vars/vars.yml
 ====
 
 
+[[post-execution-validation]]
 === Validation post-exécution
 
 [%collapsible%open]
@@ -576,6 +589,7 @@ image:automation-ora-aws-fsx-iscsi-em-001.png["Cette image fournit l'écran de c
 ====
 
 
+[[oracle-backup-restore-and-clone-with-snapcenter]]
 === Sauvegarde, restauration et clonage Oracle avec SnapCenter
 
 [%collapsible%open]
@@ -585,6 +599,7 @@ Se référer à TR-4979link:../oracle/aws-ora-fsx-vmc-guestmount.html#oracle-bac
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

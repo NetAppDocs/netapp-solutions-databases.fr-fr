@@ -20,6 +20,7 @@ Cet exemple de cas d'utilisation client réel illustre les défis, les solutions
 
 
 
+[[the-challenge]]
 == Le défi
 
 * Le client exécutait des charges de travail SQL Server dans un centre de données privé hébergé par un tiers.  L’augmentation du coût de l’hébergement était devenue un problème.
@@ -33,6 +34,7 @@ image:customer-usecase-mssql-fsx1-before.png["Cette image fournit une image dét
 
 
 
+[[the-solution]]
 == La solution
 
 * Migration depuis un environnement SAN Dell Unity et AppSync hébergé sur site vers AWS Amazon FSx ONTAP avec NetApp SnapCenter.
@@ -46,6 +48,7 @@ image:customer-usecase-mssql-fsx1-after.png["Cette image fournit une image déta
 
 
 
+[[the-outcome]]
 == Le résultat
 
 * 40 % de réduction des coûts par rapport à l'hébergement continu sur un centre de données privé.
@@ -58,6 +61,7 @@ image:customer-usecase-mssql-fsx1-after.png["Cette image fournit une image déta
 
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les solutions de base de données d'entreprise NetApp , consultez le site Web suivantlink:https://docs.netapp.com/us-en/netapp-solutions/databases/index.html["Solutions de bases de données d'entreprise NetApp"^]

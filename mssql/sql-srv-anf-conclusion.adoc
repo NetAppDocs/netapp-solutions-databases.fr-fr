@@ -20,6 +20,7 @@ Ce document couvre les recommandations pour la planification, la conception, l�
 
 
 
+[[takeaways]]
 == Plats à emporter
 
 Les points clés de ce document comprennent :

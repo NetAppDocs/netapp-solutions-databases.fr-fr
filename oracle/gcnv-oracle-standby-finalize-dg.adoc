@@ -17,6 +17,8 @@ Finalisez la base de données de secours pour Oracle Data Guard sur Google Cloud
 
 
 
+[[step-1-create-standby-redo-log-files]]
+[[standby-redo-log-files]]
 == Étape 1 : Créez des fichiers journaux de restauration en attente
 
 Créez des fichiers journaux de restauration de secours sur les deux hôtes de base de données pour assurer la prise en charge du basculement rapide Fast-Start Failover. La taille doit être supérieure ou égale à celle du plus grand journal de restauration principal en ligne, et le nombre doit être égal au nombre de groupes en ligne par thread + 1. Après le semis GCNV, supprimez puis recréez les journaux de restauration de secours sur le serveur de secours afin de corriger les chemins répliqués.
@@ -46,6 +48,8 @@ ALTER DATABASE RECOVER MANAGED STANDBY DATABASE USING CURRENT LOGFILE DISCONNECT
 
 
 
+[[step-2-enable-flashback-and-start-recovery]]
+[[enable-flashback-on-standby]]
 == Étape 2 : Activez le flashback et lancez la récupération
 
 Activez la fonctionnalité flashback database sur le serveur de secours pour permettre la restauration automatique après un basculement, puis lancez la récupération gérée avec application en temps réel. La fonctionnalité flashback doit être activée avant de démarrer la récupération gérée, car elle ne peut pas être activée lorsque le MRP est en cours d'exécution.
@@ -85,6 +89,8 @@ SQL'
 
 
 
+[[step-3-enable-redo-shipping]]
+[[enable-redo-shipping-on-primary]]
 == Étape 3 : Activer la réexpédition des journaux de reprise
 
 Activez le transport des journaux de restauration du serveur principal vers le serveur de secours en activant `LOG_ARCHIVE_DEST_STATE_2`, qui a été délibérément défini sur `DEFER` dans xref:gcnv-oracle-standby-database.adoc#standby-init-ora-and-nomount[Étape 2] de la procédure d'initialisation du serveur de secours afin de supprimer `ORA-12154` les erreurs lors de la création du serveur de secours.
@@ -121,6 +127,8 @@ Si  `dest_2` affiche  `ORA-12154`, relancez le primaire. Après xref:gcnv-oracle
 
 
 
+[[step-4-verify-data-guard-state]]
+[[verify-target-dg-state]]
 == Étape 4 : Vérifiez l’état de Data Guard
 
 Vérifiez que la base de données principale est en mode LECTURE/ÉCRITURE et que la base de données de secours est montée avec une récupération gérée appliquant les journaux de reprise.
@@ -175,6 +183,7 @@ SQL'
 
 
 
+[[whats-next]]
 == Et ensuite ?
 
 Pour activer la gestion automatisée des rôles et la protection contre les basculements, continuez avec xref:gcnv-oracle-data-guard.adoc[Configurer Oracle Data Guard Broker, Fast-Start Failover et l'observateur].

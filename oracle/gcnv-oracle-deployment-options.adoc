@@ -15,6 +15,7 @@ Google Cloud NetApp Volumes prend en charge Oracle Database 26ai sur plusieurs n
 
 
 
+[[deployment-requirements]]
 == Exigences de déploiement
 
 Assurez-vous de disposer des éléments suivants avant de provisionner Google Cloud NetApp Volumes pour la haute disponibilité d'Oracle Database 26ai :
@@ -62,6 +63,8 @@ timedatectl
 
 
 
+[[example-deployment-configuration]]
+[[example-configuration]]
 == Exemple de configuration de déploiement
 
 Cette solution utilise la configuration de déploiement suivante :
@@ -83,6 +86,7 @@ Remplacez toutes les valeurs d'exemple dans les commandes par des valeurs proven
 
 
 
+[[deployment-options]]
 == Options de déploiement
 
 Le tableau suivant compare les modèles de déploiement HA et DR et met en évidence les domaines où l'automatisation offre le plus d'avantages opérationnels.
@@ -111,6 +115,7 @@ Le tableau suivant compare les modèles de déploiement HA et DR et met en évid
 
 
 
+[[deployment-tasks-by-ha-tier]]
 == Tâches de déploiement par niveau de haute disponibilité
 
 Le xref:gcnv-oracle-deployment.html[workflow de déploiement] fournit une séquence d'étapes numérotées pour tous les niveaux de déploiement. Tous les niveaux effectuent les tâches de déploiement de base indiquées ci-dessous, puis ajoutent des tâches spécifiques à chaque niveau pour la haute disponibilité en production :
@@ -144,6 +149,7 @@ Le xref:gcnv-oracle-deployment.html[workflow de déploiement] fournit une séque
 |===
 
 
+[[whats-next]]
 == Et ensuite ?
 
 Pour préparer votre environnement avant le déploiement, poursuivez avec xref:gcnv-oracle-access-and-apis.html[Accès et API pour Oracle Database 26ai sur Google Cloud NetApp Volumes].

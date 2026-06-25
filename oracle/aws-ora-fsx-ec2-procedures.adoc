@@ -18,12 +18,14 @@ Cette section décrit les procédures de déploiement de la base de données per
 
 
 
+[[deploy-an-ec2-linux-instance-for-oracle-via-ec2-console]]
 == Déployer une instance EC2 Linux pour Oracle via la console EC2
 
 Si vous êtes nouveau sur AWS, vous devez d’abord configurer un environnement AWS.  L'onglet de documentation sur la page de destination du site Web AWS fournit des liens d'instructions EC2 sur la façon de déployer une instance Linux EC2 qui peut être utilisée pour héberger votre base de données Oracle via la console AWS EC2.  La section suivante est un résumé de ces étapes.  Pour plus de détails, consultez la documentation spécifique à AWS EC2.
 
 
 
+[[setting-up-your-aws-ec2-environment]]
 === Configuration de votre environnement AWS EC2
 
 Vous devez créer un compte AWS pour provisionner les ressources nécessaires à l'exécution de votre environnement Oracle sur le service EC2 et FSx.  La documentation AWS suivante fournit les détails nécessaires :
@@ -40,6 +42,7 @@ Thèmes clés :
 
 
 
+[[enabling-multiple-availability-zones-in-aws-account-attributes]]
 === Activation de plusieurs zones de disponibilité dans les attributs de compte AWS
 
 Pour une configuration de haute disponibilité Oracle telle que démontrée dans le diagramme d'architecture, vous devez activer au moins quatre zones de disponibilité dans une région.  Les zones de disponibilité multiples peuvent également être situées dans différentes régions pour répondre aux distances requises pour la reprise après sinistre.
@@ -48,6 +51,7 @@ image:aws-ora-fsx-ec2-inst-001.png["Figure montrant une boîte de dialogue d'ent
 
 
 
+[[creating-and-connecting-to-an-ec2-instance-for-hosting-oracle-database]]
 === Création et connexion à une instance EC2 pour l'hébergement d'une base de données Oracle
 
 Voir le tutoriellink:https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html["Démarrer avec les instances Linux Amazon EC2"^] pour les procédures de déploiement étape par étape et les meilleures pratiques.
@@ -107,12 +111,14 @@ Vous devez créer deux instances EC2 en tant que serveurs Oracle principal et de
 
 
 
+[[provision-fsx-ontap-file-systems-for-oracle-database-storage]]
 == Provisionner les systèmes de fichiers FSx ONTAP pour le stockage de bases de données Oracle
 
 Le déploiement d’instance EC2 alloue un volume racine EBS pour le système d’exploitation.  Les systèmes de fichiers FSx ONTAP fournissent des volumes de stockage de base de données Oracle, y compris les volumes binaires, de données et de journaux Oracle.  Les volumes NFS de stockage FSx peuvent être provisionnés à partir de la console AWS FSx ou à partir de l'installation Oracle et de l'automatisation de la configuration qui alloue les volumes selon la configuration de l'utilisateur dans un fichier de paramètres d'automatisation.
 
 
 
+[[creating-fsx-ontap-file-systems]]
 === Création de systèmes de fichiers FSx ONTAP
 
 Référé à cette documentation https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-file-systems.html["Gestion des systèmes de fichiers FSx ONTAP"^] pour créer des systèmes de fichiers FSx ONTAP .
@@ -168,6 +174,7 @@ image:aws-ora-fsx-ec2-stor-008.png["Figure montrant une boîte de dialogue d'ent
 
 
 
+[[provisioning-of-database-volumes-for-oracle-database]]
 === Provisionnement de volumes de base de données pour la base de données Oracle
 
 Voirlink:https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-volumes.html["Gestion des volumes FSx ONTAP – création d'un volume"^] pour plus de détails.
@@ -193,18 +200,21 @@ NOTE: La création de LUN iSCSI n'est actuellement pas prise en charge par la co
 
 
 
+[[install-and-configure-oracle-on-an-ec2-instance-with-fsx-database-volumes]]
 == Installer et configurer Oracle sur une instance EC2 avec des volumes de base de données FSx
 
 L'équipe d'automatisation NetApp fournit un kit d'automatisation pour exécuter l'installation et la configuration d'Oracle sur les instances EC2 conformément aux meilleures pratiques.  La version actuelle du kit d'automatisation prend en charge Oracle 19c sur NFS avec le patch RU par défaut 19.8.  Le kit d'automatisation peut être facilement adapté à d'autres patchs RU si nécessaire.
 
 
 
+[[prepare-a-ansible-controller-to-run-automation]]
 === Préparer un contrôleur Ansible pour exécuter l'automatisation
 
 Suivez les instructions dans la section «<<Création et connexion à une instance EC2 pour l'hébergement d'une base de données Oracle>> " pour provisionner une petite instance Linux EC2 pour exécuter le contrôleur Ansible.  Plutôt que d'utiliser RedHat, Amazon Linux t2.large avec 2vCPU et 8G RAM devrait être suffisant.
 
 
 
+[[retrieve-netapp-oracle-deployment-automation-toolkit]]
 === Récupérer la boîte à outils d'automatisation du déploiement NetApp Oracle
 
 Connectez-vous à l'instance du contrôleur EC2 Ansible provisionnée à l'étape 1 en tant qu'utilisateur ec2 et à partir du répertoire personnel ec2-user, exécutez la commande `git clone` commande pour cloner une copie du code d'automatisation.
@@ -219,6 +229,7 @@ git clone https://github.com/NetApp-Automation/na_rds_fsx_oranfs_config.git
 ----
 
 
+[[execute-automated-oracle-19c-deployment-using-automation-toolkit]]
 === Exécuter un déploiement automatisé d'Oracle 19c à l'aide de la boîte à outils d'automatisation
 
 Voir ces instructions détailléeslink:../automation/cli-automation.html["Déploiement CLI de la base de données Oracle 19c"^] pour déployer Oracle 19c avec l'automatisation CLI.  Il y a un petit changement dans la syntaxe de commande pour l'exécution du playbook car vous utilisez une paire de clés SSH au lieu d'un mot de passe pour l'authentification de l'accès à l'hôte.  La liste suivante est un résumé de haut niveau :
@@ -262,6 +273,7 @@ Modifiez le bit d'autorisation sur le fichier de clé SSH à 400 si nécessaire.
 
 
 
+[[setting-up-snapmirror-between-primary-and-standby-fsx-ha-cluster]]
 == Configuration de SnapMirror entre le cluster FSx HA principal et le cluster FSx HA de secours
 
 Pour une haute disponibilité et une reprise après sinistre, vous pouvez configurer la réplication SnapMirror entre le cluster de stockage FSx principal et de secours.  Contrairement à d’autres services de stockage cloud, FSx permet à un utilisateur de contrôler et de gérer la réplication du stockage à la fréquence et au débit de réplication souhaités.  Il permet également aux utilisateurs de tester HA/DR sans aucun effet sur la disponibilité.
@@ -401,16 +413,19 @@ NOTE: La réplication du binaire Oracle du cluster principal vers un cluster de 
 
 
 
+[[snapcenter-deployment]]
 == Déploiement de SnapCenter
 
 
 
+[[snapcenter-installation]]
 === Installation de SnapCenter
 
 Suivrelink:https://docs.netapp.com/ocsc-41/index.jsp?topic=%2Fcom.netapp.doc.ocsc-isg%2FGUID-D3F2FBA8-8EE7-4820-A445-BC1E5C0AF374.html["Installation du serveur SnapCenter"^] pour installer le serveur SnapCenter .  Cette documentation explique comment installer un serveur SnapCenter autonome.  Une version SaaS de SnapCenter est en phase de test bêta et pourrait être disponible prochainement.  Vérifiez la disponibilité auprès de votre représentant NetApp si nécessaire.
 
 
 
+[[configure-snapcenter-plugin-for-ec2-oracle-host]]
 === Configurer le plugin SnapCenter pour l'hôte Oracle EC2
 
 . Après l’installation automatisée de SnapCenter , connectez-vous à SnapCenter en tant qu’utilisateur administrateur pour l’hôte Windows sur lequel le serveur SnapCenter est installé.
@@ -474,6 +489,7 @@ image:aws-rds-custom-deploy-snp-008.png["Figure montrant une boîte de dialogue 
 
 
 
+[[configure-backup-policy-for-oracle-database]]
 === Configurer la politique de sauvegarde pour la base de données Oracle
 
 Consultez cette sectionlink:../dbops/hybrid-dbops-sc-gs-onprem.html#7-setup-database-backup-policy-in-snapcenter["Configurer la politique de sauvegarde de la base de données dans SnapCenter"^] pour plus de détails sur la configuration de la politique de sauvegarde de la base de données Oracle.
@@ -485,6 +501,7 @@ NOTE: Vous pouvez activer l'élagage du journal d'archive Oracle dans la politiq
 
 
 
+[[configure-oracle-database-backup-and-scheduling]]
 === Configurer la sauvegarde et la planification de la base de données Oracle
 
 La sauvegarde de la base de données dans SnapCenter est configurable par l'utilisateur et peut être configurée individuellement ou en tant que groupe dans un groupe de ressources.  L'intervalle de sauvegarde dépend des objectifs RTO et RPO.  NetApp vous recommande d'exécuter une sauvegarde complète de la base de données toutes les quelques heures et d'archiver la sauvegarde du journal à une fréquence plus élevée, par exemple 10 à 15 minutes, pour une récupération rapide.

@@ -22,6 +22,7 @@ Nous supposons que les serveurs de base de données de production sont hébergé
 
 
 
+[[requirements]]
 == Exigences
 
 [cols="3, 9"]

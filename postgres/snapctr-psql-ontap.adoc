@@ -20,6 +20,7 @@ La solution fournit une vue d'ensemble et des détails sur la sauvegarde, la ré
 
 
 
+[[purpose]]
 == But
 
 Le logiciel NetApp SnapCenter software est une plate-forme d'entreprise facile à utiliser pour coordonner et gérer en toute sécurité la protection des données entre les applications, les bases de données et les systèmes de fichiers.  Il simplifie la gestion du cycle de vie de la sauvegarde, de la restauration et du clonage en déchargeant ces tâches sur les propriétaires d'applications sans sacrifier la capacité de superviser et de réguler l'activité sur les systèmes de stockage.  En exploitant la gestion des données basée sur le stockage, elle permet d’augmenter les performances et la disponibilité, ainsi que de réduire les temps de test et de développement.
@@ -34,6 +35,7 @@ Cette solution répond aux cas d’utilisation suivants :
 
 
 
+[[audience]]
 == Public
 
 Cette solution est destinée aux personnes suivantes :
@@ -46,18 +48,21 @@ Cette solution est destinée aux personnes suivantes :
 
 
 
+[[solution-test-and-validation-environment]]
 == Environnement de test et de validation de solutions
 
 Les tests et la validation de cette solution ont été réalisés dans un environnement de laboratoire qui pourrait ne pas correspondre à l’environnement de déploiement final.  Voir la section<<Facteurs clés à prendre en compte lors du déploiement>> pour plus d'informations.
 
 
 
+[[architecture]]
 === Architecture
 
 image:snapctr-psql-brc-architecture.png["Cette image fournit une image détaillée de la sauvegarde, de la récupération et du clonage de PostgreSQL avec SnapCenter."]
 
 
 
+[[hardware-and-software-components]]
 === Composants matériels et logiciels
 
 [cols="33%, 33%, 33%"]
@@ -98,6 +103,7 @@ image:snapctr-psql-brc-architecture.png["Cette image fournit une image détaill�
 |===
 
 
+[[postgresql-database-configuration-in-the-lab-environment]]
 === Configuration de la base de données PostgreSQL dans l'environnement de laboratoire
 
 [cols="33%, 33%, 33%"]
@@ -117,6 +123,7 @@ image:snapctr-psql-brc-architecture.png["Cette image fournit une image détaill�
 |===
 
 
+[[key-factors-for-deployment-consideration]]
 === Facteurs clés à prendre en compte lors du déploiement
 
 * * Déploiement de SnapCenter .*  SnapCenter peut être déployé dans un domaine Windows ou un environnement de groupe de travail.  Pour un déploiement basé sur un domaine, le compte d'utilisateur de domaine doit être un compte d'administrateur de domaine ou l'utilisateur de domaine doit appartenir au groupe de l'administrateur local sur le serveur d'hébergement SnapCenter .
@@ -128,12 +135,14 @@ image:snapctr-psql-brc-architecture.png["Cette image fournit une image détaill�
 
 
 
+[[solution-deployment]]
 == Déploiement de la solution
 
 Les sections suivantes fournissent des procédures étape par étape pour le déploiement, la configuration et la sauvegarde, la récupération et le clonage de la base de données PostgreSQL de SnapCenter sur le stockage NetApp ONTAP dans le cloud public ou sur site.
 
 
 
+[[prerequisites-for-deployment]]
 === Prérequis pour le déploiement
 
 [%collapsible%open]
@@ -145,6 +154,7 @@ Les sections suivantes fournissent des procédures étape par étape pour le dé
 ====
 
 
+[[snapcenter-installation-and-setup]]
 === Installation et configuration de SnapCenter
 
 [%collapsible%open]
@@ -205,6 +215,7 @@ image:snapctr-psql-bkup-001.png["Cette image fournit les paramètres et les poli
 ====
 
 
+[[database-backup]]
 === Sauvegarde de la base de données
 
 [%collapsible%open]
@@ -296,6 +307,7 @@ image:snapctr-psql-bkup-019.png["Cette image fournit une sauvegarde de base de d
 ====
 
 
+[[database-recovery]]
 === Récupération de base de données
 
 [%collapsible%open]
@@ -404,6 +416,7 @@ postgres=# select now();
 ====
 
 
+[[database-clone]]
 === Clonage de base de données
 
 [%collapsible%open]
@@ -479,6 +492,7 @@ postgres=# select pg_read_file('/etc/hostname') as hostname;
 ====
 
 
+[[where-to-find-additional-information]]
 == Où trouver des informations supplémentaires
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :

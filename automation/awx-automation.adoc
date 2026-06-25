@@ -18,10 +18,12 @@ Cette page décrit la méthode automatisée de déploiement d'Oracle19c sur le s
 
 
 
+[[awxtower-deployment-oracle-19c-database]]
 == Déploiement AWX/Tower de la base de données Oracle 19c
 
 
 
+[[1-create-the-inventory-group-hosts-and-credentials-for-your-environment]]
 === 1. Créez l'inventaire, le groupe, les hôtes et les informations d'identification pour votre environnement
 
 Cette section décrit la configuration de l'inventaire, des groupes, des hôtes et des informations d'identification d'accès dans AWX/Ansible Tower qui préparent l'environnement pour la consommation de solutions automatisées NetApp .
@@ -91,6 +93,7 @@ extra_vars:
 
 
 
+[[2-create-a-project]]
 === 2. Créer un projet
 
 . Accédez à Ressources → Projets et cliquez sur Ajouter.
@@ -106,6 +109,7 @@ extra_vars:
 
 
 
+[[3-configure-oracle-hostvars]]
 === 3. Configurer Oracle host_vars
 
 Les variables définies dans cette section sont appliquées à chaque serveur et base de données Oracle individuels.
@@ -118,6 +122,7 @@ NOTE: Les éléments en bleu doivent être modifiés pour correspondre à votre 
 
 
 
+[[host-vars-config]]
 === Configuration de l'hôte VARS
 
 [source, shell]
@@ -164,6 +169,7 @@ host_datastores_nfs:
 
 
 
+[[4-configure-global-variables]]
 === 4. Configurer les variables globales
 
 Les variables définies dans cette section s'appliquent à tous les hôtes Oracle, bases de données et au cluster ONTAP .
@@ -274,6 +280,7 @@ initial_pwd_all: "netapp123"
 
 
 
+[[5-configure-and-launch-the-job-template]]
 === 5. Configurer et lancer le modèle de travail.
 
 . Créez le modèle de travail.
@@ -321,6 +328,7 @@ NOTE: requirements_config garantit que vous disposez des bibliothèques appropri
 
 
 
+[[6-deploy-additional-database-on-same-oracle-host]]
 === 6. Déployer une base de données supplémentaire sur le même hôte Oracle
 
 La partie Oracle du playbook crée une seule base de données de conteneur Oracle sur un serveur Oracle par exécution.  Pour créer des bases de données de conteneurs supplémentaires sur le même serveur, procédez comme suit.
@@ -424,6 +432,7 @@ Cela confirme que l'écouteur Oracle fonctionne correctement.
 
 
 
+[[where-to-go-for-help]]
 === Où aller chercher de l’aide ?
 
 Si vous avez besoin d'aide avec la boîte à outils, veuillez vous joindre à nous.link:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.

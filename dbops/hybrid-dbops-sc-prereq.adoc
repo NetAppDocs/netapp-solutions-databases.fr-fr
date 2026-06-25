@@ -18,6 +18,7 @@ Certaines conditions préalables doivent être configurées à la fois sur site 
 
 
 
+[[on-premises]]
 == Sur place
 
 * Installation et configuration de SnapCenter
@@ -29,6 +30,7 @@ Certaines conditions préalables doivent être configurées à la fois sur site 
 
 
 
+[[public-cloud]]
 == Cloud public
 
 * Une connexion NetApp Cloud Central

@@ -18,6 +18,7 @@ Cette section fournit un résumé des tâches qui doivent être accomplies pour 
 
 
 
+[[on-premises]]
 == Sur site
 
 * Configurer l'utilisateur administrateur de la base de données dans SnapCenter
@@ -33,6 +34,7 @@ Cette section fournit un résumé des tâches qui doivent être accomplies pour 
 
 
 
+[[aws-public-cloud]]
 == Cloud public AWS
 
 * Contrôle pré-vol

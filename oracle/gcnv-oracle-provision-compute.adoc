@@ -15,6 +15,8 @@ Provisionnez des machines virtuelles Google Compute Engine pour héberger Oracle
 
 
 
+[[step-1-create-the-vms]]
+[[provision-compute-engine]]
 == Étape 1 : Créer les machines virtuelles
 
 Créez trois machines virtuelles Google Compute Engine dans différentes zones d'une même région pour isoler les pannes zonales. Utilisez la console Cloud, `gcloud`, Terraform ou votre flux de travail de provisionnement standard.
@@ -54,6 +56,8 @@ N’attachez *pas* de disque de données GCE séparé pour `/u01`.
 
 
 
+[[step-2-configure-vpc-firewall-for-tcp-1521]]
+[[vpc-firewall-allow-1521]]
 == Étape 2 : Configurer le pare-feu VPC pour TCP 1521
 
 Créez des règles de pare-feu VPC pour autoriser TCP/1521 entre les trois machines virtuelles pour le transport redo Oracle Net et la connectivité Observer. L'absence de ces règles interrompt la réplication Data Guard.
@@ -94,6 +98,8 @@ Exécutez la commande depuis les trois machines virtuelles vers chaque adresse I
 
 
 
+[[step-3-configure-hostname-dns-and-etchosts]]
+[[hostname-dns-and-etchosts]]
 == Étape 3 : Configurer le nom d’hôte, le DNS et `/etc/hosts`
 
 Configurez la résolution de nom d’hôte et DNS sur les trois machines virtuelles afin que la résolution de noms directe et inverse fonctionne pour Oracle Net, le Data Guard Broker et l’Observer.
@@ -124,6 +130,8 @@ ping -c 1 oracdb1 && ping -c 1 oracdb2 && ping -c 1 oradg-obs
 
 
 
+[[step-4-prepare-the-os-on-db-hosts-only]]
+[[os-baseline-db-hosts-only]]
 == Étape 4 : Préparez le système d’exploitation uniquement sur les hôtes de la base de données
 
 Préparez le système d'exploitation sur `oracdb1` et `oracdb2` pour Oracle Database 26ai en installant le package de préinstallation, en créant les utilisateurs et les groupes, en installant les packages iSCSI et multipath, et en configurant l'initiateur iSCSI. La configuration de l'observateur est abordée dans xref:gcnv-oracle-data-guard.adoc#install-instant-client-on-observer[Étape 4 : Installez Oracle Instant Client sur l’hôte Observer].
@@ -185,6 +193,8 @@ sudo reboot
 
 
 
+[[step-5-capture-the-iscsi-initiator-name-iqn]]
+[[capture-iscsi-initiator-iqn]]
 == Étape 5 : Capturez le nom de l’initiateur iSCSI IQN
 
 Après le redémarrage, récupérez le nom de l’initiateur iSCSI (IQN) de chaque hôte de base de données. Vous utiliserez ces IQN pour créer les groupes d’hôtes GCNV dans xref:gcnv-oracle-provision-storage.adoc#create-host-groups[Étape 2 : Créer les groupes hôtes].
@@ -207,6 +217,7 @@ sudo cat /etc/iscsi/initiatorname.iscsi
 
 
 
+[[whats-next]]
 == Et ensuite ?
 
 Pour fournir un stockage partagé pour les binaires Oracle et les groupes de disques ASM, accédez à xref:gcnv-oracle-provision-storage.adoc[Provisionner des pools iSCSI, des groupes d'hôtes et des volumes Google Cloud NetApp Volumes].
