@@ -186,4 +186,4 @@ image:snapctr-sql-dr-012.png["Figure montrant une boîte de dialogue d'entrée/s
 [[where-to-go-for-help]]
 == Où aller chercher de l’aide ?
 
-Si vous avez besoin d'aide avec cette solution et ces cas d'utilisation, veuillez rejoindre lelink:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.
+Si vous avez besoin d'aide concernant la boîte à outils, rendez-vous sur le link:https://community.netapp.com/["Communauté NetApp"^] et posez vos questions.

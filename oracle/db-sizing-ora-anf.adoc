@@ -93,7 +93,7 @@ Récupérer la boîte à outils du référentiellink:https://netapp.sharepoint.c
 ====
 La boîte à outils se compose d'un analyseur HTML basé sur le Web et de deux scripts SQL pour collecter des informations sur la base de données Oracle.  La sortie est ensuite saisie dans un modèle Excel pour générer des conseils de dimensionnement du calcul et du stockage pour le serveur de base de données Oracle.
 
-* Utilisez unlink:https://app.atroposs.com/#/awr-module["Analyseur HTML"^] Module AWR permettant de récupérer les informations de dimensionnement d'une base de données Oracle actuelle à partir d'un rapport AWR.
+* Utilisez un module AWR d'analyseur HTML pour récupérer les informations de dimensionnement d'une base de données Oracle actuelle à partir d'un rapport AWR.
 * Exécutez ora_db_data_szie.sql en tant qu'administrateur de base de données pour récupérer la taille du fichier de données Oracle physique à partir de la base de données.
 * Exécutez ora_db_logs_size.sql en tant qu'administrateur de base de données pour récupérer la taille des journaux archivés Oracle avec la fenêtre de conservation des journaux d'archivage souhaitée (jours).
 * Saisissez les informations de dimensionnement obtenues ci-dessus dans le fichier de modèle Excel oracle_db_sizing_template_anf.xlsx pour créer un guide de dimensionnement sur le calcul et le stockage pour le serveur Oracle DB.

@@ -66,13 +66,13 @@ indexpage:
       url: "/mssql/customer-usecase-mssql-fsx1.html"
     - title: SAP avec Microsoft SQL Server sur Windows à l'aide de données en cluster
         ONTAP
-      url: https://www.netapp.com/pdf.html?item=/media/16865-tr-4467pdf.pdf
+      url: https://www.netapp.com/pdf.html?item=/media/16865-tr-4467.pdf
     - title: Moderniser Microsoft SQL Server
       url: https://www.netapp.com/pdf.html?item=/media/15613-na-446.pdf
     - title: Meilleures pratiques pour Microsoft SQL Server avec ONTAP
       url: https://www.netapp.com/pdf.html?item=/media/8585-tr4590.pdf
     - title: Meilleures pratiques pour Microsoft SQL Server avec la série EF
-      url: https://www.netapp.com/pdf.html?item=/media/17086-tr4764pdf.pdf
+      url: https://www.netapp.com/pdf.html?item=/media/17086-tr4764.pdf
   - title: Solutions de bases de données cloud hybrides
     links:
     - title: Déployer et protéger Oracle RAC avec vVols dans VCF
@@ -86,7 +86,7 @@ indexpage:
     - title: Déployer Oracle19c sur ONTAP avec automatisation
       url: "/automation/db-protection-overview.html"
     - title: Exécutez des bases de données Oracle sur NetApp EF-Series
-      url: https://www.netapp.com/pdf.html?item=/media/17248-tr4794pdf.pdf
+      url: https://www.netapp.com/pdf.html?item=/media/17248-tr4794.pdf
   - title: Bases de données open source
     links:
     - title: Déployer la base de données PostgreSQL et configurer la reprise après

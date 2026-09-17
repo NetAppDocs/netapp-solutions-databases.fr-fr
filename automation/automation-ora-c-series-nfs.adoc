@@ -693,6 +693,6 @@ NetApp recommande l'outil d'interface utilisateur SnapCenter pour gérer la base
 
 Pour en savoir plus sur les informations décrites dans ce document, consultez les documents et/ou sites Web suivants :
 
-* link:https://www.netapp.com/pdf.html?item=/media/81583-da-4240-aff-c-series.pdf["NetApp AFF Série C"^]
+* link:https://www.netapp.com/pdf.html?item=/media/81583-ds-4240-aff-c-series.pdf["NetApp AFF Série C"^]
 * link:https://docs.oracle.com/en/database/oracle/oracle-database/19/ladbi/deploying-dnfs.html#GUID-D06079DB-8C71-4F68-A1E3-A75D7D96DCE2["Déploiement d'Oracle Direct NFS"^]
 
