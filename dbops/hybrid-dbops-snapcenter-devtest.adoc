@@ -153,10 +153,3 @@ image:snapctr-sql-clone-010.png["Figure montrant une boîte de dialogue d'entré
 . Supprimez les bases de données clonées et nettoyez l’environnement du serveur de base de données cloud.  Suivez ensuite les procédures précédentes pour cloner une nouvelle base de données avec de nouvelles données.  Il ne faut que quelques minutes pour cloner une nouvelle base de données.
 . Arrêtez la base de données clonée, exécutez une commande d'actualisation de clone à l'aide de la CLI.  Consultez la documentation SnapCenter suivante pour plus de détails :link:https://docs.netapp.com/us-en/snapcenter/protect-sco/task_refresh_a_clone.html["Rafraîchir un clone"^] .
 
-
-
-
-[[where-to-go-for-help]]
-== Où aller chercher de l’aide ?
-
-Si vous avez besoin d'aide avec cette solution et ces cas d'utilisation, rejoignez lelink:https://netapppub.slack.com/archives/C021R4WC0LC["Canal Slack d'assistance de la communauté NetApp Solution Automation"] et recherchez le canal solution-automatisation pour poster vos questions ou demandes de renseignements.
