@@ -1,0 +1,850 @@
+---
+sidebar: sidebar 
+permalink: mssql/sql-smb3-aff.html 
+keywords: Microsoft SQL server, SMB 3, AFF, ONTAP 
+summary: 'Déployez SQL Server 2025 sur Windows Server 2025 avec des bases de données utilisateur, des journaux de transactions, TempDB et des sauvegardes sur des partages SMB 3 à disponibilité continue sur un système AFF NetApp. Cette procédure comprend la configuration de la SVM ONTAP, des volumes et des partages, l"installation de SQL Server et la protection des bases de données avec SnapCenter.' 
+---
+= Déploiement de SQL Server 2025 sur NetApp AFF à l'aide de partages SMB 3 à disponibilité continue
+:allow-uri-read: 
+:icons: font
+:experimental: 
+:nofooter: 
+:source-highlighter: highlight.js
+:cluster: SAPCC-A50-01-02
+:svm: a50-sql
+:cifs: A50-SQL
+:domain: SAPCC
+:fqdn-domain: sapcc.stl.netapp.com
+:host: sql-1
+:svc-account: SAPCC\sql1admin
+:imagesdir: ../media/
+
+
+[role="lead"]
+Déployez SQL Server 2025 sur Windows Server 2025 avec des bases de données utilisateur, des journaux de transactions, TempDB et des sauvegardes sur des partages SMB 3 à disponibilité continue sur un système AFF NetApp. Cette procédure comprend la configuration de la SVM ONTAP, des volumes et des partages, l'installation de SQL Server et la protection des bases de données avec SnapCenter.
+
+
+
+[[scope]]
+[[intro-scope]]
+== Portée
+
+Cette procédure déploie une instance SQL Server 2025 autonome sur un seul hôte Windows Server 2025, avec les bases de données utilisateur, les journaux de transactions, TempDB et les sauvegardes sur des partages SMB 3 à disponibilité continue (CA). La même architecture de stockage s'applique aux instances de cluster de basculement SQL Server (FCI) et aux groupes de disponibilité Always On, mais leur configuration spécifique au cluster n'est pas couverte. L'optimisation des performances et le dimensionnement de SQL Server ne sont pas non plus couverts. Pour connaître les avantages, les composants de la solution, les principes de conception et le fonctionnement de la disponibilité continue, consultez link:sql-smb3-aff-overview.html["Découvrez SQL Server 2025 sur NetApp AFF avec disponibilité continue SMB 3"].
+
+
+
+[[audience]]
+[[intro-audience]]
+== Public
+
+Cette procédure est destinée à :
+
+* *Administrateurs de stockage*, qui configurent le cluster ONTAP, la SVM, les volumes et les partages SMB.
+* *Administrateurs Windows et Active Directory*, qui préparent l'hôte Windows Server 2025, les comptes de service et le réseau.
+* *Administrateurs de bases de données*, qui installent et configurent SQL Server 2025 et mettent en place la sauvegarde et la restauration.
+
+
+Une connaissance de base de l'administration de ONTAP System Manager, de Windows Server et de SQL Server est requise.
+
+
+
+[[lab-environment]]
+[[overview]]
+== Environnement de laboratoire
+
+Les captures d'écran de cette procédure ont été réalisées dans l'environnement de laboratoire suivant. Remplacez les valeurs par celles de votre environnement.
+
+[cols="1,2"]
+|===
+| Composant | Valeur utilisée en laboratoire 
+
+
+| Système de stockage | NetApp AFF A50 paire haute disponibilité, cluster `{cluster}`, ONTAP 9.19.1 
+
+
+| SVM | `{svm}` (nom du serveur CIFS `{cifs}`) 
+
+
+| LIF de données SMB | 192.168.175.138 (nœud 1), 192.168.175.139 (nœud 2) 
+
+
+| domaine Active Directory | `{domain}` (`{fqdn-domain}`) 
+
+
+| Hôte SQL Server | `{host}.{fqdn-domain}`, Windows Server 2025 Datacenter (Expérience utilisateur) 
+
+
+| Serveur SQL | SQL Server 2025 Enterprise Edition (17.0.1000.7), instance par défaut `MSSQLSERVER` 
+
+
+| compte de service SQL Server | `{svc-account}` (compte de domaine) 
+|===
+[cols="1,1,1,2"]
+|===
+| Volume / partage | Taille | Chemin UNC | Contenu 
+
+
+| `sql1_data` | 1024 Gio | `+\\a50-sql\sql1_data+` | Fichiers de données de la base de données utilisateur (`.mdf`, `.ndf`) 
+
+
+| `sql1_log` | 512 Gio | `+\\a50-sql\sql1_log+` | Fichiers journaux des transactions de la base de données utilisateur (`.ldf`) 
+
+
+| `sql1_tempdb` | 500 Gio | `+\\a50-sql\sql1_tempdb+` | Fichiers de données et de journalisation TempDB 
+
+
+| `sql1_backups` | 2000 Gio | `+\\a50-sql\sql1_backups+` | Fichiers de sauvegarde natifs de SQL Server (`.bak`, `.trn`) 
+|===
+
+TIP: Utilisez des volumes distincts pour les données, les journaux, TempDB et les sauvegardes. Cela vous permet d'appliquer des paramètres de QoS, de snapshots, d'efficacité et de réplication différents à chaque volume. De plus, TempDB, qui évolue constamment, reste exclu des snapshots de vos bases de données utilisateur.
+
+
+
+[[prerequisites]]
+== Prérequis
+
+Veuillez vous assurer que les conditions suivantes sont remplies avant de commencer :
+
+.NetApp ONTAP
+* La paire haute disponibilité AFF est installée, et le cluster est configuré et en bonne santé.
+* La licence CIFS (SMB) est installée. Elle est incluse dans ONTAP One.
+* Il existe au moins un agrégat de données (niveau local) sur chaque nœud.
+* La synchronisation de l'heure entre le cluster et Active Directory s'effectue via NTP. Le décalage horaire maximal autorisé pour Kerberos est de 5 minutes.
+* Les ports du réseau de données, le domaine de diffusion et (en option) les VLAN pour les LIF SMB sont configurés.
+
+
+.Active Directory et DNS
+* Un domaine Active Directory est disponible et les serveurs DNS sont accessibles depuis les LIF de données du SVM.
+* Vous disposez d'un compte autorisé à créer des objets d'ordinateur dans l'unité d'organisation cible, pour le serveur CIFS.
+* Un compte utilisateur de domaine dédié peut être utilisé comme compte de service pour les services SQL Server Database Engine et SQL Server Agent.
+
+
+
+IMPORTANT: SQL Server doit s'exécuter sous un compte de domaine lorsque ses fichiers se trouvent sur un partage SMB. Les comptes virtuels intégrés (`NT SERVICE\MSSQLSERVER`) et les comptes locaux ne peuvent pas se voir accorder l'accès à un partage de fichiers distant.
+
+.Windows Server
+* Windows Server 2025 (Desktop Experience) est installé, mis à jour et joint au domaine.
+* Le support d'installation de SQL Server 2025 (ISO) et une clé de produit valide (ou une édition gratuite) sont disponibles.
+
+
+.Exigences et restrictions SMB pour SQL Server sur ONTAP
+* Le protocole SMB 3.0 ou une version ultérieure doit être activé sur la SVM.
+* Tous les volumes hébergeant des partages CA doivent utiliser le style de sécurité *NTFS* et doivent avoir été en *NTFS* dès le départ.
+* SMB Direct (RDMA) n'est pas pris en charge.
+* ReFS n'est pas pris en charge. ONTAP (WAFL) fournit le système de fichiers pour les partages.
+
+
+
+
+[[step-1-prepare-the-ontap-cluster]]
+[[cluster-prep]]
+== Étape 1 : Préparez le cluster ONTAP
+
+Connectez-vous à ONTAP System Manager et assurez-vous que l'heure du cluster est synchronisée avec Active Directory. L'authentification Kerberos pour les partages SMB échoue si le décalage horaire dépasse 5 minutes.
+
+.Étapes
+. Ouvrez un navigateur Web et connectez-vous à ONTAP System Manager à l’adresse  `+https://<cluster-management-IP>+`. Connectez-vous avec le compte administrateur du cluster.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_004.png["Connexion à ONTAP System Manager"]
+
+====
+. Le *Dashboard* est le point d'entrée pour une configuration plus poussée dans System Manager.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_005.png["tableau de bord de System Manager"]
+
+====
+. Si NTP n'est pas encore configuré, ajoutez vos contrôleurs de domaine ou les serveurs NTP de l'entreprise à l'aide de la CLI (SSH vers la LIF de gestion du cluster):
++
+[source, console]
+----
+cluster::> cluster time-service ntp server create -server <NTP-server-IP>
+----
+
+
+
+
+[[step-2-create-and-configure-the-storage-vm-svm]]
+[[svm]]
+== Étape 2 : Créer et configurer la machine virtuelle de stockage (SVM)
+
+Utilisez une SVM dédiée pour SQL Server. La SVM rejoint Active Directory en tant que serveur CIFS et fournit une interface logique de données SMB sur chaque nœud de la paire haute disponibilité.
+
+.Étapes
+. Créez la SVM avec System Manager ou la CLI :
++
+[role="tabbed-block"]
+====
+.Gestionnaire de système
+--
+.. Dans System Manager, accédez au menu:Cluster[Storage VMs] et cliquez sur *+ Add*.
++
+.Afficher un exemple
+[%collapsible]
+=====
+image:sql25_smb_bp_006.png["Cluster > Machines virtuelles de stockage > Ajouter"]
+
+=====
+.. Saisissez le *nom de la machine virtuelle de stockage* `a50-sql`. Dans *Protocole d'accès*, sélectionnez l'onglet *SMB/CIFS, NFS, S3* et sélectionnez *Activer SMB/CIFS*.
++
+.Afficher un exemple
+[%collapsible]
+=====
+image:sql25_smb_bp_007.png["Ajouter une machine virtuelle de stockage - nom et protocole"]
+
+=====
++
+
+NOTE: Le nom de la machine virtuelle de stockage est le nom SMB du serveur CIFS.
+
+.. Saisissez les informations Active Directory (domaine, nom d’administrateur, mot de passe et OU) et les informations DNS (domaine DNS et serveurs de noms).
+.. Sous *Interface réseau*, configurez une LIF de données sur *chaque* nœud.
++
+
+TIP: Une interface logique (LIF) par nœud permet à SQL Server d’accéder directement (localement) à chaque nœud. C’est une condition préalable au protocole SMB multicanal et au basculement sans interruption de service. Utilisez des ports 25 GbE ou plus rapides et une MTU identique de bout en bout.
+
++
+
+NOTE: Vous devez enregistrer ces interfaces réseau auprès de votre serveur DNS. Pour plus de détails, consultez https://docs.netapp.com/us-en/ontap-system-manager-classic/smb-config/task_mapping_smb_server_dns_server.html["Associer le serveur SMB au serveur DNS"^].
+
+.. Cliquez sur *Enregistrer*. System Manager crée la SVM, le volume racine, les LIF et la configuration DNS, puis joint le serveur CIFS au domaine.
+.. Vérifiez le volume racine du SVM (`a50_sql_root` dans le laboratoire). Il doit utiliser le style de sécurité *NTFS*, sinon les partages SMB ne fonctionneront pas. Accédez à menu:Storage[Volumes], sélectionnez le volume racine et cliquez sur *Edit* pour vérifier ses paramètres.
++
+.Afficher un exemple
+[%collapsible]
+=====
+image:sql25_smb_bp_012.png["Modifier le volume racine SVM a50_sql_root"]
+
+=====
+
+
+--
+.ONTAP CLI
+--
+Les commandes suivantes permettent de créer la même configuration depuis l'interface de ligne de commande. Remplacez les valeurs d'espace réservé entre chevrons.
+
+[source, console]
+----
+cluster::> vserver create -vserver a50-sql -rootvolume a50_sql_root -aggregate <aggr_node1> -rootvolume-security-style ntfs
+
+cluster::> vserver modify -vserver a50-sql -allowed-protocols cifs
+
+cluster::> network interface create -vserver a50-sql -lif a50-sql_smb_n1 -service-policy default-data-files -home-node <node1> -home-port <port> -address 192.168.175.138 -netmask <netmask>
+cluster::> network interface create -vserver a50-sql -lif a50-sql_smb_n2 -service-policy default-data-files -home-node <node2> -home-port <port> -address 192.168.175.139 -netmask <netmask>
+
+cluster::> vserver services name-service dns create -vserver a50-sql -domains sapcc.stl.netapp.com -name-servers <dns1>,<dns2>
+
+cluster::> vserver cifs create -vserver a50-sql -cifs-server A50-SQL -domain sapcc.stl.netapp.com -ou CN=Computers
+----
+--
+====
+. [[svm-smb-options,Configurer les options du serveur SMB]]Configurez les options du serveur SMB. Vérifiez que les options SMB requises pour SQL Server sont activées sur la SVM :
++
+[source, console]
+----
+cluster::> set -privilege advanced
+cluster::*> vserver cifs options show -vserver a50-sql -fields smb3-enabled,is-multichannel-enabled,is-large-mtu-enabled,copy-offload-enabled,shadowcopy-enabled
+cluster::*> vserver cifs options modify -vserver a50-sql -smb3-enabled true -is-multichannel-enabled true -is-large-mtu-enabled true -copy-offload-enabled true -shadowcopy-enabled true
+cluster::*> set -privilege admin
+----
++
+[cols="1,3"]
+|===
+| Option | But 
+
+
+| `smb3-enabled` | SMB 3.x est requis pour les partages disponibles en permanence. 
+
+
+| `is-multichannel-enabled` | Le protocole SMB multicanal utilise plusieurs connexions TCP et chemins réseau pour un débit et une résilience accrus. 
+
+
+| `is-large-mtu-enabled` | Autorise les lectures et écritures SMB jusqu'à 1 Mo. 
+
+
+| `copy-offload-enabled` | Déchargement de copie ODX ; les copies sont effectuées à l’intérieur du système de stockage. 
+
+
+| `shadowcopy-enabled` | VSS distant pour les partages SMB. Requis par les applications de sauvegarde qui utilisent VSS pour les partages SMB. 
+|===
+. Vérifiez que le serveur CIFS est enregistré dans DNS et qu'il peut être résolu depuis l'hôte SQL Server :
++
+[source, powershell]
+----
+PS C:\> Resolve-DnsName a50-sql.sapcc.stl.netapp.com
+----
+
+
+
+
+[[step-3-create-the-sql-server-volumes-and-smb-shares]]
+[[volumes]]
+== Étape 3 : Créer les volumes SQL Server et les partages SMB
+
+Créez un volume et un partage SMB pour chaque type de fichier. System Manager crée le partage en même temps que le volume.
+
+.Étapes
+. Dans System Manager, développez *Storage* et cliquez sur *Volumes*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_013.png["Menu Stockage dans System Manager"]
+
+====
+. La liste des volumes s'ouvre. Cliquez sur *+ Ajouter*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_014.png["Page des volumes avec filtre"]
+
+====
+. Créez le `sql1_data` volume et son partage SMB pour les fichiers de données de la base de données utilisateur.
++
+.. Dans la boîte de dialogue *Ajouter un volume*, saisissez les valeurs suivantes :
++
+*** *Nom*: `sql1_data`
+*** *VM de stockage*: `a50-sql`
+*** *Capacité*: `1024 GiB`
+*** *Niveau de service de performance* : *Personnalisé*, *Attribuer un groupe de règles QoS* : *Existant* > `none`
+*** *Autorisations d'accès* : sélectionnez *Partage via SMB/CIFS*. Nom du partage `sql1_data`, accordez l'accès à l'utilisateur ou aux utilisateurs `Everyone`, autorisation *Contrôle total*.
+*** *Protection* : laissez l’option *Activer les instantanés (locaux)* décochée. Les sauvegardes cohérentes au niveau des applications sont créées par NetApp SnapCenter.
++
+Cliquez sur *Enregistrer*.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_015.png["Ajouter le volume sql1_data,width=450"]
+
+====
+
+
+.. Le volume est créé et apparaît comme *En ligne*. Développez la ligne du volume pour consulter les détails : style de sécurité NTFS, chemins d’accès SMB via les deux LIF (`+\\192.168.175.138\sql1_data+` et `+\\192.168.175.139\sql1_data+`), et le groupe de stratégie QoS.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_016.png["Volume sql1_data créé avec partage SMB"]
+
+====
+
+
+. Répétez les étapes pour les volumes de journalisation, TempDB et de sauvegarde avec les tailles et les noms indiqués dans <<overview>>.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_022.png["Les quatre volumes SQL Server sont en ligne,width=800"]
+
+====
++
+
+WARNING: En laboratoire, le partage accorde *Everyone / Full control* au niveau du partage par souci de simplicité. En production, limitez l’ACL du partage au compte de service SQL Server, au compte SQL Server Agent et au groupe d’administration DBA, par exemple :
+
++
+[source, console]
+----
+cluster::> vserver cifs share access-control create -vserver a50-sql -share sql1_data -user-or-group SAPCC\sql1admin -permission Full_Control
+cluster::> vserver cifs share access-control create -vserver a50-sql -share sql1_data -user-or-group "SAPCC\SQL Admins" -permission Full_Control
+cluster::> vserver cifs share access-control delete -vserver a50-sql -share sql1_data -user-or-group Everyone
+----
+. Répétez les commandes pour `sql1_log`, `sql1_tempdb` et `sql1_backups`. Le compte de service doit également disposer du *Contrôle total* sur les autorisations NTFS de la racine du partage. L'installation de SQL Server vérifie ce point, comme indiqué dans <<sql-dbengine>>.
+
+
+
+
+[[step-4-adjust-the-volume-settings]]
+[[volume-settings]]
+== Étape 4 : Ajuster les paramètres du volume
+
+Vérifiez et ajustez les paramètres d'espace et d'instantané de chaque volume SQL Server.
+
+.Étapes
+. Dans la liste des volumes, survolez le volume et cliquez sur l'icône en forme de crayon (*Modifier*).
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_023.png["Icône de modification dans la liste des volumes"]
+
+====
+. Configurez le volume comme suit (illustré pour `sql1_data`):
++
+** *Activer le provisionnement fin* : sélectionné
+** *Redimensionnement automatique* : sélectionné, *Mode d’expansion automatique* : *Agrandissement*, *Taille maximale* : par exemple `1.3 TiB` (environ 125 à 130 % de la taille du volume)
+** *Activer la réserve fractionnaire (100%)* : décochée
+** *Type de sécurité*: `NTFS`
+** *Réserve d'instantané %*: `5` (`0` pour `sql1_tempdb`)
+** *Planification des instantanés* : désactivée. Les instantanés qui ne sont pas cohérents au niveau des applications sont inutiles pour SQL Server ; utilisez NetApp SnapCenter à la place.
+** *Afficher le répertoire des instantanés aux clients* : facultatif (le laboratoire l'a laissé sélectionné ; le désactiver le masque `~snapshot` du partage)
++
+Cliquez sur *Enregistrer* et répétez l’opération pour `sql1_log`, `sql1_tempdb` et `sql1_backups`.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_024.png["Modifier les paramètres du volume sql1_data,width=450"]
+
+====
+
+
+
+
+[source, console]
+----
+cluster::> volume modify -vserver a50-sql -volume sql1_data -space-guarantee none -fractional-reserve 0 -percent-snapshot-space 5 -snapshot-policy none -autosize-mode grow -max-autosize 1.3TB
+----
+
+TIP: Conservez l’efficacité du stockage (déduplication, compression, compactage) activée sur AFF. Elle est intégrée et n’a aucun impact mesurable sur les performances de SQL Server.
+
+
+
+[[step-5-enable-continuous-availability-on-the-smb-shares]]
+[[ca-shares]]
+== Étape 5 : Activer la disponibilité continue sur les partages SMB
+
+La disponibilité continue est le paramètre le plus important pour SQL Server sur SMB. Sans elle, SQL Server perd ses descripteurs de fichiers ouverts lors d'une prise de contrôle ONTAP ou d'une migration de LIF, et les bases de données passent à l'état suspect.
+
+.Étapes
+. Activez la disponibilité continue sur les partages SMB avec System Manager ou la CLI :
++
+[role="tabbed-block"]
+====
+.Gestionnaire de système
+--
+.. Accédez au menu :Stockage[Partages SMB]. La liste affiche les quatre nouveaux partages et les partages administratifs par défaut `c$` et `ipc$`.
++
+.Afficher un exemple
+[%collapsible]
+=====
+image::sql25_smb_bp_025.png[Liste des partages SMB]
+
+=====
+.. Cliquez sur l'icône Plus d’options (*⋮*) à côté du partage `sql1_data` et sélectionnez *Modifier*.
++
+.Afficher un exemple
+[%collapsible]
+=====
+image::sql25_smb_bp_026.png[Partager le menu contextuel avec l’option Modifier]
+
+=====
+.. Sous *Propriétés du partage*, configurez les éléments suivants :
++
+*** *Activer la disponibilité continue*: *sélectionné*
+*** *Autoriser les clients à accéder au répertoire des snapshots* : désactivé
+*** *Chiffrer les données lors de l’accès à ce partage* : décoché (facultatif, selon vos exigences de sécurité)
+*** *Activer les oplocks* : sélectionné
+*** *Activer la notification de changement* : sélectionné
+*** *Activer l'énumération basée sur l'accès (ABE)* : décoché
++
+Cliquez sur *Enregistrer*.
+
++
+.Afficher un exemple
+[%collapsible]
+=====
+image::sql25_smb_bp_027.png[Modifier le partage avec disponibilité continue activée]
+
+=====
+
+
+.. Répétez ces étapes pour `sql1_log`,  `sql1_tempdb` et `sql1_backups`.
+
+
+--
+.ONTAP CLI
+--
+[source, console]
+----
+cluster::> vserver cifs share properties add -vserver a50-sql -share-name sql1_data -share-properties continuously-available
+cluster::> vserver cifs share properties add -vserver a50-sql -share-name sql1_log -share-properties continuously-available
+cluster::> vserver cifs share properties add -vserver a50-sql -share-name sql1_tempdb -share-properties continuously-available
+cluster::> vserver cifs share properties add -vserver a50-sql -share-name sql1_backups -share-properties continuously-available
+
+cluster::> vserver cifs share show -vserver a50-sql -fields share-name,path,share-properties
+----
+--
+====
+
+
+
+
+[[step-6-prepare-windows-server-2025]]
+[[windows-prep]]
+== Étape 6 : Préparer Windows Server 2025
+
+Effectuez les étapes suivantes sur l'hôte SQL Server `{host}` en tant qu'administrateur de domaine.
+
+.Étapes
+. Vérifiez que le serveur est joint au domaine et que le serveur CIFS peut être résolu (voir <<svm-smb-options>>).
+. Assurez-vous que le compte de service SQL Server existe dans Active Directory, par exemple `SAPCC\sql1admin`. Utilisez le même compte pour le moteur de base de données et pour SQL Server Agent, ou utilisez un compte distinct pour chacun. Dans tous les cas, accordez à chaque compte l'accès aux quatre partages.
+. Tester l'accès aux partages dans le contexte de sécurité du compte de service :
++
+[source, powershell]
+----
+PS C:\> runas /user:SAPCC\sql1admin "cmd /c dir \\a50-sql\sql1_data && echo test > \\a50-sql\sql1_data\write-test.txt && del \\a50-sql\sql1_data\write-test.txt"
+----
+. Ouvrez le port SQL Server dans le pare-feu Windows :
++
+[source, powershell]
+----
+PS C:\> New-NetFirewallRule -DisplayName "SQL Server (TCP 1433)" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action Allow
+----
+. Vérifiez la connexion SMB à la SVM. Le dialecte doit être 3.x et `ContinuouslyAvailable` doit être `True`:
++
+[source, powershell]
+----
+PS C:\> dir \\a50-sql\sql1_data | Out-Null
+PS C:\> Get-SmbConnection -ServerName a50-sql | Format-Table ServerName,ShareName,Dialect,ContinuouslyAvailable,Encrypted,Signed
+PS C:\> Get-SmbMultichannelConnection -ServerName a50-sql
+----
+
+
+
+NOTE: Par défaut, Windows Server 2025 exige la signature SMB pour toutes les connexions SMB sortantes. ONTAP prend en charge la signature SMB et la négocie automatiquement. La signature engendre une charge CPU supplémentaire des deux côtés ; il est donc important de l’inclure dans vos tests de performance. Ne désactivez pas la signature sans avoir préalablement effectué une analyse de sécurité.
+
+
+
+[[step-7-install-sql-server-2025]]
+[[sql-install]]
+== Étape 7 : Installer SQL Server 2025
+
+Installez SQL Server 2025 sur l’hôte Windows Server à l’aide de l’assistant d’installation. Installez les fichiers binaires et les bases de données système sur le disque local, puis dirigez la base de données utilisateur, le journal des transactions, TempDB et les emplacements de sauvegarde vers les partages SMB que vous avez créés.
+
+.Étapes
+. Démarrez l'installation autonome à partir du Centre d'installation de SQL Server.
++
+.. Montez l'image ISO de SQL Server 2025. Dans l'Explorateur de fichiers, ouvrez le lecteur DVD (`D:` dans le laboratoire) et double-cliquez sur *setup*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_029.png["Démarrage de l'installation de SQL Server 2025"]
+
+====
+.. Le *Centre d'installation de SQL Server* s'ouvre. Sélectionnez *Installation* dans le volet gauche et cliquez sur *Nouvelle installation autonome de SQL Server ou ajouter des fonctionnalités à une installation existante*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_030.png["Centre d'installation de SQL Server,width=600"]
+
+image:sql25_smb_bp_031.png["L'installation autonome démarre,width=600"]
+
+====
+
+
+. Sélectionnez l'édition de SQL Server, acceptez les termes du contrat de licence et laissez Setup rechercher les mises à jour du produit.
++
+.. Sur la page *Edition*, sélectionnez *Enter the product key* et entrez votre clé de produit, ou sélectionnez une édition gratuite (Evaluation, Enterprise Developer, Standard Developer ou Express). Sélectionnez le type de licence qui vous correspond (*I have a SQL Server license only* dans le laboratoire) et cliquez sur *Next*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_032.png["Page d'édition, largeur=600"]
+
+====
+.. Sur la page *Conditions de licence*, lisez les conditions, sélectionnez *J'accepte les conditions de licence et la déclaration de confidentialité*, puis cliquez sur *Suivant*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_033.png["Page des conditions de licence,width=600"]
+
+====
+.. Sur la page *Microsoft Update*, sélectionnez *Utiliser Microsoft Update pour rechercher les mises à jour (recommandé)* et cliquez sur *Suivant*. Le programme d'installation exécute alors les vérifications suivantes : *Règles globales*, *Mises à jour du produit*, *Fichiers d'installation* et *Règles d'installation*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_034.png["page Microsoft Update,width=600"]
+
+====
+
+
+. Sélectionnez les fonctionnalités de SQL Server et l’instance à installer. Les fichiers binaires restent sur le disque local ; seuls les fichiers de la base de données sont placés sur les partages SMB.
++
+.. Sur la page *Sélection des fonctionnalités*, sélectionnez *Services du moteur de base de données* ainsi que toutes les fonctionnalités supplémentaires dont vous avez besoin (dans cet exemple, *SQL Server Replication* a également été sélectionné). Laissez le *Répertoire racine de l'instance* et le *Répertoire des fonctionnalités partagées* sur le disque local `C:`. Les binaires sont installés localement ; seuls les fichiers de base de données sont placés sur les partages SMB.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_035.png["Page de sélection des fonctionnalités,width=600"]
+
+====
+.. Sur la page *Configuration de l'instance*, sélectionnez *Instance par défaut* (`MSSQLSERVER`), ou saisissez une instance nommée, puis cliquez sur *Suivant*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_036.png["Page de configuration de l'instance,largeur=600"]
+
+====
+
+
+. Configurez les services SQL Server Database Engine et SQL Server Agent pour qu'ils s'exécutent sous un compte de domaine ayant accès aux partages SMB.
++
+.. Sur la page *Configuration du serveur*, onglet *Comptes de service*, saisissez le compte de domaine et le mot de passe pour *SQL Server Agent* et *SQL Server Database Engine*, et définissez le *Type de démarrage* sur *Automatique*.
++
+
+IMPORTANT: Utilisez le compte de domaine disposant du contrôle total sur les partages SMB. La capture d'écran montre deux orthographes différentes (`SAPCC\sql1_admin` et `SAPCC\sql1admin`). Assurez-vous que chaque compte saisi existe dans Active Directory et a accès aux quatre partages.
+
++
+
+TIP: Sélectionnez *Accorder le privilège Effectuer une tâche de maintenance de volume au service Moteur de base de données SQL Server*. Cela permet une initialisation instantanée des fichiers, ce qui accélère considérablement la création de bases de données, l'augmentation de la taille des fichiers et les restaurations.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_037.png["Configuration du serveur - comptes de service,width=600"]
+
+====
+
+
+. Configurez le mode d'authentification et les administrateurs SQL Server, puis saisissez les chemins UNC des partages SMB pour la base de données utilisateur, le journal des transactions, la sauvegarde et les fichiers TempDB.
++
+.. Sur la page *Configuration du moteur de base de données*, onglet *Configuration du serveur*, sélectionnez le mode d'authentification. Le laboratoire utilise le *Mode mixte* avec un mot de passe fort pour le `sa` compte. Cliquez sur *Ajouter l'utilisateur actuel* et sur *Ajouter...* pour ajouter les administrateurs SQL Server (utilisateurs ou, de préférence, un groupe AD).
++
+
+TIP: Utilisez le *mode d'authentification Windows* sauf si les applications nécessitent des connexions SQL Server.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_038.png["Configuration du moteur de base de données - authentification,width=600"]
+
+====
+.. Dans l'onglet *Répertoires de données*, saisissez les chemins UNC des partages SMB:
++
+[cols="1,2"]
+|===
+| Paramètre | Valeur 
+
+
+| Répertoire racine des données | `C:\Program Files\Microsoft SQL Server\`(local; les bases de données système restent sur `C:`) 
+
+
+| Répertoire de la base de données utilisateur | `+\\a50-sql\sql1_data+` 
+
+
+| Répertoire des journaux de la base de données utilisateur | `+\\a50-sql\sql1_log+` 
+
+
+| Répertoire de sauvegarde | `+\\a50-sql\sql1_backups+` 
+|===
++
+
+TIP: Pour placer également les bases de données système (`master`, `model`, `msdb`) sur le partage SMB, définissez *Data root directory* sur un chemin UNC. Créez un nouveau volume et un nouveau partage pour les bases de données système si vous le souhaitez.
+
++
+
+NOTE: Vous devez utiliser les chemins UNC pour les répertoires car les lecteurs réseau mappés ne sont pas pris en charge.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_039.png["Répertoires de données avec chemins UNC,width=600"]
+
+====
+.. Dans l'onglet *TempDB*, sélectionnez le répertoire de données local par défaut et cliquez sur *Supprimer*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_040.png["Onglet TempDB - supprimer le répertoire par défaut,largeur=600"]
+
+====
+.. Cliquez sur *Ajouter...*. Dans la boîte de dialogue *Parcourir les dossiers*, saisissez le chemin UNC `+\\a50-sql\sql1_tempdb\data+` dans le champ *Dossier* et cliquez sur *OK*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_041.png["Onglet TempDB - Rechercher un dossier avec un chemin UNC,largeur=600"]
+
+====
+.. Définissez le *répertoire des journaux* sur le même partage (cliquez sur *...*). Le laboratoire utilise `+\\a50-sql\sql1_tempdb\data+` ce même partage à la fois pour les fichiers de données TempDB et pour le fichier journal TempDB. Les avertissements jaunes, indiquant qu'un serveur de fichiers a été spécifié comme répertoire de données, sont normaux.
++
+
+TIP: Utilisez un fichier de données TempDB par cœur logique de processeur, jusqu'à 8 fichiers. Définissez les tailles initiales en fonction de l'ensemble de travail TempDB prévu afin que TempDB n'ait pas besoin de s'agrandir pendant le fonctionnement. Tous les fichiers de données doivent avoir la même taille et la même croissance automatique.
+
++
+
+NOTE: Vous devez utiliser un dossier pour les fichiers de données et de journalisation de TempDB sinon l'installation échouera.
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_042.png["TempDB configuré sur un partage SMB avec avertissements,largeur=600"]
+
+====
+.. Configurez les onglets *MaxDOP* et *Mémoire* en fonction de votre dimensionnement (les valeurs par défaut recommandées constituent un bon point de départ) et cliquez sur *Suivant*.
+.. [[sql-dbengine,Étape 7]]Pour chaque chemin UNC, le programme d'installation affiche une boîte de dialogue vous demandant de vérifier que le compte de service SQL Server dispose des autorisations de partage Contrôle total sur le serveur de fichiers. Après avoir vérifié les autorisations (voir <<volumes>> et <<windows-prep>>), cliquez sur *Oui*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_043.png["Boîte de dialogue de confirmation des autorisations du serveur de fichiers,largeur=600"]
+
+====
+
+
+. Vérifiez le résumé de l'installation, exécutez l'installation et confirmez la réussite de l'installation de toutes les fonctionnalités.
++
+.. Sur la page *Prêt à installer*, consultez le résumé et cliquez sur *Installer*.
++
+
+TIP: Copiez le  `ConfigurationFile.ini` indiqué sous *Chemin du fichier de configuration*. Vous pouvez l'utiliser pour les installations sans assistance d'hôtes SQL Server supplémentaires (`setup.exe /ConfigurationFile=<path>`).
+
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_044.png["Résumé Prêt à installer, largeur=600"]
+
+====
+.. Veuillez patienter pendant que l'installation s'exécute.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_045.png["Progression de l’installation,width=600"]
+
+====
+.. Une fois l'installation terminée, vérifiez que toutes les fonctionnalités affichent *Succeeded* et cliquez sur *Close*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_046.png["Installation terminée,width=600"]
+
+====
+
+
+
+
+
+
+[[step-8-verify-the-installation-and-create-a-database]]
+[[post-install]]
+== Étape 8 : Vérifier l’installation et créer une base de données
+
+Créez une base de données de test avec SQL Server Management Studio (SSMS) et vérifiez que ses fichiers de données et de journalisation se trouvent sur les partages SMB. Vous pouvez également vérifier sur ONTAP que les fichiers ouverts utilisent la disponibilité continue.
+
+.Étapes
+. Installez SQL Server Management Studio (SSMS) à partir du lien *Install SQL Server Management Tools* dans l’Installation Center, ou sur le site web de Microsoft.
+. Démarrez SSMS et connectez-vous à l'instance (`sql-1`) avec l'authentification Windows.
+. Cliquez avec le bouton droit sur *Bases de données* et sélectionnez *Nouvelle base de données...*. Saisissez un nom de base de données (`SQ1` dans le laboratoire), définissez les tailles initiales des fichiers et cliquez sur *OK*. Les chemins d'accès aux fichiers de données et du journal sont par défaut  `+\\a50-sql\sql1_data+` et  `+\\a50-sql\sql1_log+`.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_047.png["Nouvelle boîte de dialogue de base de données avec chemins UNC,width=800"]
+
+====
+. La nouvelle base de données apparaît dans *Object Explorer*.
++
+.Afficher un exemple
+[%collapsible]
+====
+image:sql25_smb_bp_048.png["Explorateur d’objets SSMS avec la base de données SQ1,width=800"]
+
+====
+. Vérifiez les emplacements des fichiers avec T-SQL:
++
+[source, sql]
+----
+SELECT DB_NAME(database_id) AS database_name,
+       type_desc,
+       name AS logical_name,
+       physical_name,
+       size * 8 / 1024 AS size_mb
+FROM   sys.master_files
+ORDER  BY database_id, type_desc;
+----
+. Facultatif : vérifier la disponibilité continue des fichiers ouverts sur ONTAP :
++
+[source, console]
+----
+cluster::> vserver cifs session show -vserver a50-sql
+cluster::> vserver cifs session file show -vserver a50-sql -fields share,path,continuously-available
+----
++
+Tous les fichiers SQL Server doivent afficher `continuously-available: Yes`.
+
+
+
+
+
+[[use-an-ontap-cli-script-to-configure-the-storage-in-one-pass]]
+== Utilisez un script CLI ONTAP pour configurer le stockage en une seule fois
+
+Le script suivant contient la configuration de stockage complète de cette procédure. Remplacez les valeurs entre chevrons avant de l'exécuter.
+
+[source, console]
+----
+# --- SVM -----------------------------------------------------------------
+vserver create -vserver a50-sql -rootvolume a50_sql_root -aggregate <aggr_node1> -rootvolume-security-style ntfs
+vserver modify -vserver a50-sql -allowed-protocols cifs
+
+network interface create -vserver a50-sql -lif a50-sql_smb_n1 -service-policy default-data-files -home-node <node1> -home-port <port> -address 192.168.175.138 -netmask <netmask>
+network interface create -vserver a50-sql -lif a50-sql_smb_n2 -service-policy default-data-files -home-node <node2> -home-port <port> -address 192.168.175.139 -netmask <netmask>
+
+vserver services name-service dns create -vserver a50-sql -domains sapcc.stl.netapp.com -name-servers <dns1>,<dns2>
+vserver cifs create -vserver a50-sql -cifs-server A50-SQL -domain sapcc.stl.netapp.com -ou CN=Computers
+
+set -privilege advanced
+vserver cifs options modify -vserver a50-sql -smb3-enabled true -is-multichannel-enabled true -is-large-mtu-enabled true -copy-offload-enabled true -shadowcopy-enabled true
+set -privilege admin
+
+# --- Volumes -------------------------------------------------------------
+volume create -vserver a50-sql -volume sql1_data    -aggregate <aggr_node1> -size 1TB   -security-style ntfs -junction-path /sql1_data    -space-guarantee none -fractional-reserve 0 -percent-snapshot-space 5 -snapshot-policy none -autosize-mode grow -max-autosize 1.3TB
+volume create -vserver a50-sql -volume sql1_log     -aggregate <aggr_node2> -size 512GB -security-style ntfs -junction-path /sql1_log     -space-guarantee none -fractional-reserve 0 -percent-snapshot-space 5 -snapshot-policy none -autosize-mode grow -max-autosize 650GB
+volume create -vserver a50-sql -volume sql1_tempdb  -aggregate <aggr_node2> -size 500GB -security-style ntfs -junction-path /sql1_tempdb  -space-guarantee none -fractional-reserve 0 -percent-snapshot-space 0 -snapshot-policy none -autosize-mode grow -max-autosize 650GB
+volume create -vserver a50-sql -volume sql1_backups -aggregate <aggr_node1> -size 2000GB -security-style ntfs -junction-path /sql1_backups -space-guarantee none -fractional-reserve 0 -percent-snapshot-space 5 -snapshot-policy none -autosize-mode grow -max-autosize 2600GB
+
+# --- CA shares -----------------------------------------------------------
+vserver cifs share create -vserver a50-sql -share-name sql1_data    -path /sql1_data    -share-properties oplocks,browsable,changenotify,continuously-available
+vserver cifs share create -vserver a50-sql -share-name sql1_log     -path /sql1_log     -share-properties oplocks,browsable,changenotify,continuously-available
+vserver cifs share create -vserver a50-sql -share-name sql1_tempdb  -path /sql1_tempdb  -share-properties oplocks,browsable,changenotify,continuously-available
+vserver cifs share create -vserver a50-sql -share-name sql1_backups -path /sql1_backups -share-properties oplocks,browsable,changenotify,continuously-available
+
+# --- Share permissions (repeat for each share) ----------------------------
+vserver cifs share access-control create -vserver a50-sql -share sql1_data -user-or-group SAPCC\sql1admin -permission Full_Control
+vserver cifs share access-control delete -vserver a50-sql -share sql1_data -user-or-group Everyone
+
+# --- Verification ----------------------------------------------------------
+vserver cifs show -vserver a50-sql
+vserver cifs share show -vserver a50-sql -fields share-name,path,share-properties
+vserver cifs session file show -vserver a50-sql -fields share,path,continuously-available
+----
+
+TIP: Répartissez les volumes entre les agrégats des deux nœuds, par exemple les données et les sauvegardes sur le nœud 1, et les journaux et TempDB sur le nœud 2. Cela utilise les ressources des deux contrôleurs.
+
+
+
+[[additional-information]]
+[[references]]
+== Informations Complémentaires
+
+Pour plus d'informations sur les sujets abordés dans cette procédure, consultez les ressources suivantes :
+
+* NetApp : https://docs.netapp.com/us-en/ontap-apps-dbs/microsoft/win_smb.html["Microsoft SQL Server et SMB avec ONTAP"]
+* NetApp : https://docs.netapp.com/us-en/ontap/smb-hyper-v-sql/configure-solutions-concept.html["Configurer ONTAP pour les solutions Microsoft Hyper-V et SQL Server via SMB"]
+* NetApp : https://docs.netapp.com/us-en/ontap/smb-hyper-v-sql/server-volume-requirements-sql-serve-concept.html["Configuration requise pour le serveur SMB et le volume pour SQL Server sur SMB"]
+* Microsoft : https://learn.microsoft.com/en-us/sql/database-engine/install-windows/install-sql-server-with-smb-fileshare-as-a-storage-option["Installer SQL Server avec un stockage de partage de fichiers SMB"]
+* NetApp : https://docs.netapp.com/us-en/snapcenter/protect-scsql/concept_snapcenter_plug_in_for_microsoft_sql_server_overview.html["SnapCenter Présentation du plug-in pour Microsoft SQL Server"]
+* NetApp : https://imt.netapp.com/matrix/["Outil de matrice d'interopérabilité (IMT)"]
+
