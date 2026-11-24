@@ -54,6 +54,14 @@ indexpage:
       url: "/oracle/gcp-oracle-gcnv-overview.html"
   - title: Solutions de serveur SQL pour le cloud et sur site
     links:
+    - title: Découvrez SQL Server 2025 sur NetApp AFF avec SMB
+      url: "/mssql/sql-smb3-aff-overview.html"
+    - title: Déploiement de SQL Server 2025 sur NetApp AFF via SMB
+      url: "/mssql/sql-smb3-aff.html"
+    - title: Découvrez SQL Server 2025 sur NetApp AFF avec iSCSI
+      url: "/mssql/sql-iscsi-aff-overview.html"
+    - title: Déploiement de SQL Server 2025 sur NetApp AFF via iSCSI
+      url: "/mssql/sql-iscsi-aff.html"
     - title: Sauvegarder et récupérer SQL Server sur AWS FSx ONTAP
       url: "/mssql/sqlsb-backup-restore-aws-fsxn.html"
     - title: Exécutez SQL Server sur AWS EC2 avec FSx ONTAP
@@ -62,12 +70,6 @@ indexpage:
       url: "/mssql/sql-srv-anf-overview.html"
     - title: Exécutez SQL Server sur Google Cloud NetApp Volumes
       url: "/mssql/gcnv-sql-aoag-setup.html"
-    - title: Découvrez SQL Server 2025 sur NetApp AFF avec disponibilité continue
-        SMB 3
-      url: "/mssql/sql-smb3-aff-overview.html"
-    - title: Déploiement de SQL Server 2025 sur NetApp AFF à l'aide de partages SMB
-        3 à disponibilité continue
-      url: "/mssql/sql-smb3-aff.html"
     - title: Migrer la charge de travail SQL sur site vers FSx ONTAP
       url: "/mssql/customer-usecase-mssql-fsx1.html"
     - title: SAP avec Microsoft SQL Server sur Windows à l'aide de données en cluster
